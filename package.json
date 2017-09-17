@@ -1,0 +1,27 @@
+{
+  "name": "lesson-editor",
+  "version": "0.0.1",
+  "description": "An editor for CSEC lessons written in either Markdown or AsciiDoc.",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mss-csec/lesson-editor.git"
+  },
+  "author": "Terry Chen (on behalf of CSEC)",
+  "license": "ECL-2.0",
+  "bugs": {
+    "url": "https://github.com/mss-csec/lesson-editor/issues"
+  },
+  "homepage": "https://github.com/mss-csec/lesson-editor#readme",
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-preset-env": "^1.6.0",
+    "gulp": "^3.9.1",
+    "gulp-babel": "^7.0.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-sourcemaps": "^2.6.1"
+  }
+}
