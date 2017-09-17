@@ -14,6 +14,8 @@
     theme: 'default'
   };
 
+  var convDelta = 200;
+
   // DOM elements
   var editor = $('#editor'),
       preview = $('#preview');
@@ -21,6 +23,7 @@
   // Library initialization
   var cm = CodeMirror.fromTextArea(editor, {
     lineNumbers: true,
+    lineWrapping: true,
     styleActiveLine: true
   });
 
@@ -46,44 +49,35 @@
 
   var adoc = Asciidoctor();
 
+  // Worker
+  var converterWorker = void 0;
+
+  if (window.Worker) {
+    converterWorker = new Worker('./assets/converter.js');
+    converterWorker.onmessage = function (e) {
+      console.log(e.data);
+      preview.innerHTML = e.data;
+    };
+  }
+
   // Functions
   var convert = function convert(src) {
     // Extract YAML
     if (src.slice(0, 3) === '---') {
-      var splitSrc = src.split('\n').slice(1),
+      var splitSrc = src.split('\n'),
           yaml = [],
           metadata = {},
-          lineNo = 2; // offset by 1 for ending delim
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
-
-      try {
-        for (var _iterator = splitSrc[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var line = _step.value;
-
-          if (line === '---') break;
-          yaml.push(line);
-          lineNo++;
+          line = 1; // offset by 1 for ending delim
+      for (; line < splitSrc.length; line++) {
+        if (splitSrc[line] === '---') {
+          line++;
+          break;
         }
-      } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator.return) {
-            _iterator.return();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
+        yaml.push(splitSrc[line]);
       }
-
       try {
         metadata = jsyaml.safeLoad(yaml.join('\n'));
-        src = src.split('\n').slice(lineNo).join('\n');
+        src = splitSrc.slice(line).join('\n');
       } catch (e) {
         return '<pre style="color:#c00">' + e.message + '</pre>';
       }
@@ -114,17 +108,49 @@
     }
   };
 
+  var cmUpdate = function cmUpdate() {
+    cm.setOption('mode', globals.mode);
+    cm.setOption('theme', globals.theme);
+  };
+
   // Page init
+  var convTimeout = null,
+      convTimestamp = 0;
   cm.on('change', function () {
-    preview.innerHTML = convert(cm.getValue());
+    if (Date.now() - convTimestamp > convDelta) {
+      clearTimeout(convTimeout);
+      convTimestamp = Date.now();
+
+      if (converterWorker) {
+        convTimeout = setTimeout(function () {
+          converterWorker.postMessage({
+            mode: globals.mode,
+            data: cm.getValue()
+          });
+        }, convDelta);
+      } else {
+        convTimeout = setTimeout(function () {
+          preview.innerHTML = convert(cm.getValue());
+        }, convDelta);
+      }
+    }
   });
 
-  cm.setOption('mode', globals.mode);
-  cm.setOption('theme', globals.theme);
+  cmUpdate();
 
   $('#converter').addEventListener('change', function () {
     globals.mode = $('#converter').value;
-    preview.innerHTML = convert(cm.getValue());
+
+    cmUpdate();
+
+    if (converterWorker) {
+      converterWorker.postMessage({
+        mode: globals.mode,
+        data: cm.getValue()
+      });
+    } else {
+      preview.innerHTML = convert(cm.getValue());
+    }
   });
 })();
 //# sourceMappingURL=app.js.map

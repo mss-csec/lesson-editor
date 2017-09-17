@@ -6,7 +6,7 @@ const gulp = require('gulp'),
       sourcemaps = require('gulp-sourcemaps');
 
 gulp.task('build', () => {
-  gulp.src('assets/app.es6')
+  gulp.src('assets/*.es6')
     .pipe(rename({ extname: '.js' }))
     .pipe(sourcemaps.init())
     .pipe(babel({ presets: ['env'] }))
@@ -14,8 +14,8 @@ gulp.task('build', () => {
     .pipe(gulp.dest('assets'))
 });
 
-gulp.task('watch', () => {
-  gulp.watch('assets/app.es6', ['build']);
+gulp.task('watch', ['build'], () => {
+  gulp.watch('assets/*.es6', ['build']);
 });
 
 gulp.task('default', ['build']);

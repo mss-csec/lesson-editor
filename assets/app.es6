@@ -8,6 +8,8 @@
     theme: 'default'
   };
 
+  const convDelta = 200;
+
   // DOM elements
   const editor = $('#editor'),
         preview = $('#preview');
@@ -15,6 +17,7 @@
   // Library initialization
   const cm = CodeMirror.fromTextArea(editor, {
     lineNumbers: true,
+    lineWrapping: true,
     styleActiveLine: true
   });
 
@@ -40,22 +43,35 @@
 
   const adoc = Asciidoctor();
 
+  // Worker
+  let converterWorker;
+
+  if (window.Worker) {
+    converterWorker = new Worker('./assets/converter.js');
+    converterWorker.onmessage = (e) => {
+      console.log(e.data);
+      preview.innerHTML = e.data;
+    };
+  }
+
   // Functions
   let convert = (src) => {
     // Extract YAML
     if (src.slice(0,3) === '---') {
-      let splitSrc = src.split('\n').slice(1),
+      let splitSrc = src.split('\n'),
           yaml = [],
           metadata = {},
-          lineNo = 2; // offset by 1 for ending delim
-      for (let line of splitSrc) {
-        if (line === '---') break;
-        yaml.push(line);
-        lineNo++;
+          line = 1; // offset by 1 for ending delim
+      for (; line < splitSrc.length; line++) {
+        if (splitSrc[line] === '---') {
+          line++;
+          break;
+        }
+        yaml.push(splitSrc[line]);
       }
       try {
         metadata = jsyaml.safeLoad(yaml.join('\n'));
-        src = src.split('\n').slice(lineNo).join('\n');
+        src = splitSrc.slice(line).join('\n');
       } catch (e) {
         return `<pre style="color:#c00">${e.message}</pre>`;
       }
@@ -87,16 +103,48 @@
     }
   };
 
+  let cmUpdate = () => {
+    cm.setOption('mode', globals.mode);
+    cm.setOption('theme', globals.theme);
+  }
+
   // Page init
+  let convTimeout = null,
+      convTimestamp = 0;
   cm.on('change', () => {
-    preview.innerHTML = convert(cm.getValue());
+    if (Date.now() - convTimestamp > convDelta) {
+      clearTimeout(convTimeout);
+      convTimestamp = Date.now();
+
+      if (converterWorker) {
+        convTimeout = setTimeout(() => {
+          converterWorker.postMessage({
+            mode: globals.mode,
+            data: cm.getValue()
+          });
+        }, convDelta);
+      } else {
+        convTimeout = setTimeout(() => {
+          preview.innerHTML = convert(cm.getValue());
+        }, convDelta);
+      }
+    }
   });
 
-  cm.setOption('mode', globals.mode);
-  cm.setOption('theme', globals.theme);
+  cmUpdate();
 
   $('#converter').addEventListener('change', () => {
     globals.mode = $('#converter').value;
-    preview.innerHTML = convert(cm.getValue());
+
+    cmUpdate();
+
+    if (converterWorker) {
+      converterWorker.postMessage({
+        mode: globals.mode,
+        data: cm.getValue()
+      });
+    } else {
+      preview.innerHTML = convert(cm.getValue());
+    }
   });
 })();
