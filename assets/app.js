@@ -49,90 +49,78 @@
 
   var adoc = Asciidoctor();
 
-  // Worker
-  var converterWorker = void 0;
-
-  if (window.Worker) {
-    converterWorker = new Worker('./assets/converter.js');
-    converterWorker.onmessage = function (e) {
-      console.log(e.data);
-      preview.innerHTML = e.data;
-    };
-  }
-
   // Functions
   var convert = function convert(src) {
-    // Extract YAML
-    if (src.slice(0, 3) === '---') {
-      var splitSrc = src.split('\n'),
-          yaml = [],
-          metadata = {},
-          line = 1; // offset by 1 for ending delim
-      for (; line < splitSrc.length; line++) {
-        if (splitSrc[line] === '---') {
-          line++;
-          break;
+    return new Promise(function (resolve, reject) {
+      // Extract YAML
+      if (src.slice(0, 3) === '---') {
+        var splitSrc = src.split('\n'),
+            yaml = [],
+            metadata = {},
+            line = 1; // offset by 1 for ending delim
+        for (; line < splitSrc.length; line++) {
+          if (splitSrc[line] === '---') {
+            line++;
+            break;
+          }
+          yaml.push(splitSrc[line]);
         }
-        yaml.push(splitSrc[line]);
-      }
-      try {
-        metadata = jsyaml.safeLoad(yaml.join('\n'));
-        src = splitSrc.slice(line).join('\n');
-      } catch (e) {
-        return '<pre style="color:#c00">' + e.message + '</pre>';
-      }
-
-      if (metadata && metadata.hasOwnProperty('title')) {
-        src = (globals.mode === 'markdown' ? '#' : '=') + ' ' + metadata.title + '\n' + src;
-      }
-    }
-
-    if (globals.mode === 'markdown') {
-      return md.render(src);
-    } else if (globals.mode === 'asciidoc') {
-      var converted = adoc.convert(src, { attributes: { showTitle: true, pp: '++', cpp: 'C++' } });
-      converted = converted.replace(/\{%\s*highlight(\s+[a-zA-Z0-9]+)?(\s+[a-zA-Z0-9]+)?\s*%\}((?:.|\s)*?)\{%\s*endhighlight\s*%\}/gm, function (_, lang, linenos, code) {
-        lang = lang.trim();
-        // linenos = linenos.trim();
-        if (lang === 'linenos') {
-          var _ref = [linenos, lang];
-          lang = _ref[0];
-          linenos = _ref[1];
+        try {
+          metadata = jsyaml.safeLoad(yaml.join('\n'));
+          src = splitSrc.slice(line).join('\n');
+        } catch (e) {
+          reject('JSYaml: ' + e.message);
         }
-        return '<pre><code class="language-' + lang + '">' + hljs.highlight(lang, code).value + '</code></pre>';
-      });
 
-      return converted;
-    } else {
-      return src;
-    }
+        if (metadata && metadata.hasOwnProperty('title')) {
+          src = (globals.mode === 'markdown' ? '#' : '=') + ' ' + metadata.title + '\n' + src;
+        }
+      }
+
+      if (globals.mode === 'markdown') {
+        resolve(md.render(src));
+      } else if (globals.mode === 'asciidoc') {
+        var converted = adoc.convert(src, { attributes: { showTitle: true, pp: '++', cpp: 'C++' } });
+        converted = converted.replace(/\{%\s*highlight(\s+[a-zA-Z0-9]+)?(\s+[a-zA-Z0-9]+)?\s*%\}((?:.|\s)*?)\{%\s*endhighlight\s*%\}/gm, function (_, lang, linenos, code) {
+          lang = lang.trim();
+          // linenos = linenos.trim();
+          if (lang === 'linenos') {
+            var _ref = [linenos, lang];
+            lang = _ref[0];
+            linenos = _ref[1];
+          }
+          return '<pre><code class="language-' + lang + '">' + hljs.highlight(lang, code).value + '</code></pre>';
+        });
+
+        resolve(converted);
+      } else {
+        resolve(src);
+      }
+    });
   };
 
   var cmUpdate = function cmUpdate() {
     cm.setOption('mode', globals.mode);
     cm.setOption('theme', globals.theme);
+  },
+      render = function render() {
+    convert(cm.getValue()).then(function (rendered) {
+      preview.innerHTML = rendered;
+    }, function (errMsg) {
+      preview.innerHTML = '<pre style="color:#c00">' + errMsg + '</pre>';
+    });
   };
 
   // Page init
   var convTimeout = null,
       convTimestamp = 0;
   cm.on('change', function () {
+    console.log('change');
     if (Date.now() - convTimestamp > convDelta) {
       clearTimeout(convTimeout);
       convTimestamp = Date.now();
 
-      if (converterWorker) {
-        convTimeout = setTimeout(function () {
-          converterWorker.postMessage({
-            mode: globals.mode,
-            data: cm.getValue()
-          });
-        }, convDelta);
-      } else {
-        convTimeout = setTimeout(function () {
-          preview.innerHTML = convert(cm.getValue());
-        }, convDelta);
-      }
+      convTimeout = setTimeout(render, convDelta);
     }
   });
 
@@ -143,14 +131,7 @@
 
     cmUpdate();
 
-    if (converterWorker) {
-      converterWorker.postMessage({
-        mode: globals.mode,
-        data: cm.getValue()
-      });
-    } else {
-      preview.innerHTML = convert(cm.getValue());
-    }
+    render();
   });
 })();
 //# sourceMappingURL=app.js.map

@@ -43,19 +43,8 @@
 
   const adoc = Asciidoctor();
 
-  // Worker
-  let converterWorker;
-
-  if (window.Worker) {
-    converterWorker = new Worker('./assets/converter.js');
-    converterWorker.onmessage = (e) => {
-      console.log(e.data);
-      preview.innerHTML = e.data;
-    };
-  }
-
   // Functions
-  let convert = (src) => {
+  let convert = (src) => new Promise((resolve, reject) => {
     // Extract YAML
     if (src.slice(0,3) === '---') {
       let splitSrc = src.split('\n'),
@@ -73,7 +62,7 @@
         metadata = jsyaml.safeLoad(yaml.join('\n'));
         src = splitSrc.slice(line).join('\n');
       } catch (e) {
-        return `<pre style="color:#c00">${e.message}</pre>`;
+        reject('JSYaml: ' + e.message);
       }
 
       if (metadata && metadata.hasOwnProperty('title')) {
@@ -82,7 +71,7 @@
     }
 
     if (globals.mode === 'markdown') {
-      return md.render(src);
+      resolve(md.render(src));
     } else if (globals.mode === 'asciidoc') {
       let converted = adoc.convert(src, { attributes: { showTitle: true, pp: '++', cpp: 'C++' } });
       converted = converted.replace(
@@ -97,37 +86,33 @@
         }
       );
 
-      return converted;
+      resolve(converted);
     } else {
-      return src;
+      resolve(src);
     }
-  };
+  });
 
   let cmUpdate = () => {
     cm.setOption('mode', globals.mode);
     cm.setOption('theme', globals.theme);
-  }
+  }, render = () => {
+    convert(cm.getValue()).then((rendered) => {
+      preview.innerHTML = rendered;
+    }, (errMsg) => {
+      preview.innerHTML = `<pre style="color:#c00">${errMsg}</pre>`;
+    });
+  };
 
   // Page init
   let convTimeout = null,
       convTimestamp = 0;
   cm.on('change', () => {
+    console.log('change');
     if (Date.now() - convTimestamp > convDelta) {
       clearTimeout(convTimeout);
       convTimestamp = Date.now();
 
-      if (converterWorker) {
-        convTimeout = setTimeout(() => {
-          converterWorker.postMessage({
-            mode: globals.mode,
-            data: cm.getValue()
-          });
-        }, convDelta);
-      } else {
-        convTimeout = setTimeout(() => {
-          preview.innerHTML = convert(cm.getValue());
-        }, convDelta);
-      }
+      convTimeout = setTimeout(render, convDelta);
     }
   });
 
@@ -138,13 +123,6 @@
 
     cmUpdate();
 
-    if (converterWorker) {
-      converterWorker.postMessage({
-        mode: globals.mode,
-        data: cm.getValue()
-      });
-    } else {
-      preview.innerHTML = convert(cm.getValue());
-    }
+    render();
   });
 })();
