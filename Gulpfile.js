@@ -10,6 +10,7 @@ gulp.task('build', () => {
     .pipe(rename({ extname: '.js' }))
     .pipe(sourcemaps.init())
     .pipe(babel({ presets: ['env'] }))
+    .on('error', function (err) { console.log(err.toString()); this.emit('end'); })
     .pipe(sourcemaps.write('.'))
     .pipe(gulp.dest('assets'))
 });
