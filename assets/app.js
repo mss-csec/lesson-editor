@@ -50,6 +50,16 @@
   var adoc = Asciidoctor();
 
   // Functions
+  var strFmt = function strFmt(str) {
+    for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      args[_key - 1] = arguments[_key];
+    }
+
+    return str.replace(/\{(\d+)\}/g, function (_, i) {
+      return (i | 0) < args.length ? args[i | 0] : _;
+    });
+  };
+
   var convert = function convert(src) {
     return new Promise(function (resolve, reject) {
       // Extract YAML
@@ -102,8 +112,9 @@
   var cmUpdate = function cmUpdate() {
     cm.setOption('mode', globals.mode);
     cm.setOption('theme', globals.theme);
-  },
-      render = function render() {
+  };
+
+  var render = function render() {
     convert(cm.getValue()).then(function (rendered) {
       preview.innerHTML = rendered;
     }, function (errMsg) {
@@ -111,11 +122,154 @@
     });
   };
 
+  // Action buttons
+  var actionDelims = {
+    bold: { markdown: ['**', '**'], asciidoc: ['**', '**'] },
+    italic: { markdown: ['_', '_'], asciidoc: ['__', '__'] },
+    strike: { markdown: ['~~', '~~'], asciidoc: ['[line-through]#', '#'] },
+    u_list: { markdown: ['- ', ''], asciidoc: ['* ', ''] },
+    o_list: { markdown: ['{0}. ', ''], asciidoc: ['. ', ''] },
+    code: { markdown: ['`', '`', 'block', '```{0}', '```'], asciidoc: ['``', '``', 'block', '++++\n{% highlight {0} %}', '{% endhighlight %}\n++++'] },
+    quote: { markdown: ['> ', ''], asciidoc: ['block', '[quote, <author>]\n____', '____'] },
+    heading: { markdown: ['#{0} ', ''], asciidoc: ['={0} ', ''] },
+    'heading+1': { markdown: ['#{0} ', ''], asciidoc: ['={0} ', ''] },
+    math: { markdown: ['$$', '$$', 'block', '$$', '$$'], asciidoc: ['\\(', '\\)', 'block', '\\[', '\\]'] },
+    link: { markdown: ['[', '](<link URL>)'], asciidoc: ['link:<link URL>[', ']'] },
+    image: { markdown: ['![', '](<image URL>)'], asciidoc: ['image:<image URL>[', ']'] },
+    ftnote: { markdown: ['[^{0}]\n\n[^{0}]: ', ''], asciidoc: ['footnote:[', ']'] }
+  };
+
+  var doAction = function doAction(action) {
+    var actionDelim = actionDelims[action][globals.mode],
+        lineDelim = actionDelim,
+        blockDelim = null,
+        cursorOffset = { line: 0, ch: 0 };
+
+    if (actionDelim.indexOf('block') > -1) {
+      var ind = actionDelim.indexOf('block');
+      lineDelim = actionDelim.slice(0, ind);
+      blockDelim = actionDelim.slice(ind + 1);
+    }
+
+    var replaceFcn = function replaceFcn(content, _ref2) {
+      var anchor = _ref2.anchor,
+          head = _ref2.head;
+
+      var splitLines = content.split('\n'),
+          mode = void 0;
+
+      if (!blockDelim && lineDelim.length === 2) {
+        mode = 'line';
+      } else if (lineDelim.length === 0) {
+        mode = 'block';
+      } else {
+        // Determine whether to insert block or line delim
+        // If whole line(s) selected, block
+        // Otherwise, line
+        var aLine = anchor.line,
+            aCh = anchor.ch,
+            hLine = head.line,
+            hCh = head.ch;
+
+        // Normalize so that anchor is always before head
+
+        if (aLine > hLine || aLine === hLine && aCh > hCh) {
+          var _ref3 = [hLine, aLine];
+          aLine = _ref3[0];
+          hLine = _ref3[1];
+          var _ref4 = [hCh, aCh];
+          aCh = _ref4[0];
+          hCh = _ref4[1];
+        }
+
+        if (aCh === 0 && (/^\s*$/.test(cm.getLine(aLine - 1)) || aLine < hLine && hCh === 0 || hCh !== 0 && hCh === cm.getLine(hLine).length)) {
+          // block
+          mode = 'block';
+        } else {
+          // line
+          mode = 'line';
+        }
+      }
+
+      switch (mode) {
+        case 'block':
+          // Undo action if already applied
+          if (content.slice(0, blockDelim[0].length) === blockDelim[0] && content.slice(-blockDelim[1].length) === blockDelim[1]) {
+            return content.slice(blockDelim[0].length + 1, -blockDelim[1].length - 1);
+          }
+
+          splitLines.unshift(blockDelim[0]);
+          splitLines.push(blockDelim[1]);
+          cursorOffset = {
+            line: blockDelim[0].split('\n').length,
+            ch: blockDelim[0].split('\n').slice(-1)[0].length
+          };
+          break;
+        case 'line':
+          var i = 0;
+          splitLines = splitLines.map(function (l) {
+            // Undo action if already applied
+            if (l.slice(0, lineDelim[0].length) === lineDelim[0] && (lineDelim[1] === '' || l.slice(-lineDelim[1].length) === lineDelim[1])) {
+              return l.slice(lineDelim[0].length, lineDelim[1] !== '' ? -lineDelim[1].length : Infinity);
+            }
+
+            if (splitLines.length > 1 && /^\s*$/.test(l)) {
+              // case-by-case
+              if (globals.mode === 'markdown' && action === 'quote') {
+                return lineDelim[0] + l;
+              }
+
+              return l;
+            }
+
+            i++;
+
+            // case-by-case
+            if (globals.mode === 'markdown' && action === 'o_list') {
+              return strFmt(lineDelim[0], i) + l;
+            }
+
+            return lineDelim[0] + l + lineDelim[1];
+          });
+          cursorOffset = {
+            line: lineDelim[0].split('\n').length - 1,
+            ch: lineDelim[0].split('\n').slice(-1)[0].length
+          };
+          break;
+      }
+
+      return splitLines.join('\n');
+    };
+
+    if (cm.somethingSelected()) {
+      var selections = cm.getSelections(),
+          ranges = cm.listSelections(),
+          replacements = [];
+
+      for (var i = 0; i < selections.length; i++) {
+        replacements.push(replaceFcn(selections[i], ranges[i]));
+      }
+
+      cm.replaceSelections(replacements, 'around');
+    } else {
+      var cursor = cm.getCursor();
+      cm.replaceRange(replaceFcn('', { anchor: cursor, head: cursor }), cursor);
+      cm.setCursor({ line: cursor.line + cursorOffset.line, ch: cursor.ch + cursorOffset.ch });
+    }
+  };
+
+  $('#actions').addEventListener('click', function (e) {
+    if (e.target.hasAttribute('action')) {
+      doAction(e.target.getAttribute('action'));
+      cm.focus();
+    }
+  });
+
   // Page init
   var convTimeout = null,
       convTimestamp = 0;
+
   cm.on('change', function () {
-    console.log('change');
     if (Date.now() - convTimestamp > convDelta) {
       clearTimeout(convTimeout);
       convTimestamp = Date.now();
