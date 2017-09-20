@@ -9,6 +9,7 @@
   };
 
   const convDelta = 200;
+  const emptyLine = /^\s*$/;
 
   // DOM elements
   const editor = $('#editor'),
@@ -75,9 +76,30 @@
     }
 
     if (globals.mode === 'markdown') {
+      // Replace LaTeX tags
+      src = src.replace(
+        /([^$\n]*\n)?\$\$([^$]+?)\$\$([^$\n]*\n)?/gm,
+        (_, pre, code, post) => {
+          if (pre !== undefined && pre.length && emptyLine.test(pre) &&
+            post !== undefined && post.length && emptyLine.test(post)) {
+            // display
+            return pre +
+              katex.renderToString(code, { displayMode: true, throwOnError: false }) +
+              post;
+          } else {
+            // inline
+            return (pre || '') +
+              katex.renderToString(code, { throwOnError: false }) +
+              (post || '');
+          }
+        }
+      );
+
       resolve(md.render(src));
     } else if (globals.mode === 'asciidoc') {
       let converted = adoc.convert(src, { attributes: { showTitle: true, pp: '++', cpp: 'C++' } });
+
+      // Code blocks
       converted = converted.replace(
         /\{%\s*highlight(\s+[a-zA-Z0-9]+)?(\s+[a-zA-Z0-9]+)?\s*%\}((?:.|\s)*?)\{%\s*endhighlight\s*%\}/gm,
         (_, lang, linenos, code) => {
@@ -87,6 +109,22 @@
             [ lang, linenos ] = [ linenos, lang ];
           }
           return `<pre><code class="language-${lang}">${hljs.highlight(lang, code).value}</code></pre>`;
+        }
+      );
+
+      // LaTeX
+      converted = converted.replace(
+        /\\(\(|\[)([\s\S]+?)\\(\)|\])/g,
+        (_, open, code, close) => {
+          if (open === '[' && close === ']') {
+            // display
+            return katex.renderToString(code, { displayMode: true, throwOnError: false});
+          } else if (open === '(' && close === ')') {
+            // inline
+            return katex.renderToString(code, { throwOnError: false });
+          } else {
+            return _;
+          }
         }
       );
 
@@ -160,7 +198,7 @@
         }
 
         if (aCh === 0 &&
-          (/^\s*$/.test(cm.getLine(aLine - 1)) ||
+          (emptyLine.test(cm.getLine(aLine - 1)) ||
             (aLine < hLine && hCh === 0) ||
             (hCh !== 0 && hCh === cm.getLine(hLine).length))) {
           // block
@@ -197,7 +235,7 @@
               lineDelim[1] !== '' ? -lineDelim[1].length : Infinity);
           }
 
-          if (splitLines.length > 1 && /^\s*$/.test(l)) {
+          if (splitLines.length > 1 && emptyLine.test(l)) {
             // case-by-case
             if (globals.mode === 'markdown' && action === 'quote') {
               return lineDelim[0] + l;
