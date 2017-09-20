@@ -17,7 +17,7 @@
 
   <link rel="stylesheet" href="./assets/app.css">
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/es6-promise/4.1.1/es6-promise.auto.min.js" integrity="sha384-kM3+BR0fKGmv8mDasMGLSHdqcbgWHUNWV1rAL+tkqnH578xS82vhlu9gR5BHhBai" crossorigin="anonymous" defer></script>
+  <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=promise,fetch" crossorigin="anonymous" defer></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.29.0/codemirror.min.js" integrity="sha384-qntMdLR7o8tSdm0KTMxeq9MnbkRzhfxMVY2doqZdmieORkpiVgXzpD+nT+rY98xi" crossorigin="anonymous" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.29.0/addon/dialog/dialog.min.js" integrity="sha384-HTr+8uwkx1LgRn6nx+aB2znbA0o12FNtF3B9+SBoDRbQhFu57dLzsn0Mo8rOOLQ+" crossorigin="anonymous" defer></script>
@@ -63,6 +63,8 @@
         <button action="link">&#x1F517;</button>
         <button action="image">[img]</button>
         <button action="ftnote">[^a]</button>
+        <span class="separator"></span>
+        <button id="import_lesson">Import from URL</button>
       </div>
       <textarea id="editor"></textarea>
     </div>

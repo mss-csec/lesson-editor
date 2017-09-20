@@ -295,6 +295,47 @@
     }
   });
 
+  $('#converter').addEventListener('change', function () {
+    globals.mode = $('#converter').value;
+
+    cmUpdate();
+
+    render();
+  });
+
+  $('#import_lesson').addEventListener('click', function () {
+    var url = window.prompt('Enter a URL to import a lesson from');
+
+    if (url !== null) {
+      cm.setValue('Loading lesson from ' + url + '...');
+
+      fetch(url).then(function (resp) {
+        return resp.text();
+      }).then(function (text) {
+        switch (url.slice(url.lastIndexOf('.') + 1)) {
+          case 'markdn':
+          case 'md':
+          case 'mdown':
+            globals.mode = 'markdown';
+            break;
+          case 'adoc':
+          case 'asc':
+            globals.mode = 'asciidoc';
+            break;
+          default:
+            globals.mode = url.slice(url.lastIndexOf('.') + 1);
+        }
+
+        cm.setValue(text);
+        $('#converter').value = globals.mode;
+
+        cmUpdate();
+
+        render();
+      });
+    }
+  });
+
   // Page init
 
   // Load prev content, if existant
@@ -317,14 +358,6 @@
 
       convTimeout = setTimeout(render, convDelta);
     }
-  });
-
-  $('#converter').addEventListener('change', function () {
-    globals.mode = $('#converter').value;
-
-    cmUpdate();
-
-    render();
   });
 
   cmUpdate();
