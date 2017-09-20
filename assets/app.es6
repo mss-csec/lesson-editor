@@ -10,6 +10,7 @@
 
   const convDelta = 200;
   const emptyLine = /^\s*$/;
+  const storageKey = 'EDITOR_LOCAL';
 
   // DOM elements
   const editor = $('#editor'),
@@ -145,6 +146,9 @@
     }, (errMsg) => {
       preview.innerHTML = `<pre style="color:#c00">${errMsg}</pre>`;
     });
+
+    localStorage.setItem(storageKey,
+      JSON.stringify({ mode: globals.mode, value: cm.getValue() }));
   };
 
   // Action buttons
@@ -288,6 +292,17 @@
   });
 
   // Page init
+
+  // Load prev content, if existant
+  if (localStorage.getItem(storageKey)) {
+    let store = JSON.parse(localStorage.getItem(storageKey));
+
+    globals.mode = store.mode;
+    cm.setValue(store.value);
+
+    $('#converter').value = store.mode;
+  }
+
   let convTimeout = null,
       convTimestamp = 0;
 
@@ -300,8 +315,6 @@
     }
   });
 
-  cmUpdate();
-
   $('#converter').addEventListener('change', () => {
     globals.mode = $('#converter').value;
 
@@ -309,4 +322,8 @@
 
     render();
   });
+
+  cmUpdate();
+
+  render();
 })();
