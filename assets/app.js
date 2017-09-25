@@ -161,9 +161,9 @@
       blockDelim = actionDelim.slice(ind + 1);
     }
 
-    var replaceFcn = function replaceFcn(content, _ref2) {
-      var anchor = _ref2.anchor,
-          head = _ref2.head;
+    var replaceFcn = function replaceFcn(content, _ref) {
+      var anchor = _ref.anchor,
+          head = _ref.head;
 
       var splitLines = content.split('\n'),
           mode = void 0;
@@ -184,12 +184,12 @@
         // Normalize so that anchor is always before head
 
         if (aLine > hLine || aLine === hLine && aCh > hCh) {
-          var _ref3 = [hLine, aLine];
-          aLine = _ref3[0];
-          hLine = _ref3[1];
-          var _ref4 = [hCh, aCh];
-          aCh = _ref4[0];
-          hCh = _ref4[1];
+          var _ref2 = [hLine, aLine];
+          aLine = _ref2[0];
+          hLine = _ref2[1];
+          var _ref3 = [hCh, aCh];
+          aCh = _ref3[0];
+          hCh = _ref3[1];
         }
 
         if (aCh === 0 && (emptyLine.test(cm.getLine(aLine - 1)) || aLine < hLine && hCh === 0 || hCh !== 0 && hCh === cm.getLine(hLine).length)) {
@@ -251,21 +251,35 @@
       return splitLines.join('\n');
     };
 
-    if (cm.somethingSelected()) {
-      var selections = cm.getSelections(),
-          ranges = cm.listSelections(),
-          replacements = [];
+    var selections = cm.getSelections(),
+        ranges = cm.listSelections(),
+        replacements = [],
+        cursor = cm.getCursor(),
+        cursorInd = 0;
 
-      for (var i = 0; i < selections.length; i++) {
-        replacements.push(replaceFcn(selections[i], ranges[i]));
+    for (var i = 0; i < selections.length; i++) {
+      replacements.push(replaceFcn(selections[i], ranges[i]));
+
+      // if (selections[i].length > 0) {
+      //   selections[i] = {
+      //     anchor: {
+      //       line: ranges[i].anchor
+      //     }
+      //   };
+      // } else {
+      //   let oCursor = {
+      //     line: ranges[i].anchor.line + cursorOffset.line,
+      //     ch: ranges[i].anchor.ch + cursorOffset.ch
+      //   };
+      //   selections[i] = { anchor: oCursor, head: oCursor };
+      // }
+
+      if (ranges[i].anchor.line <= cursor.line && cursor.line <= ranges[i].head.line || ranges[i].anchor.line >= cursor.line && cursor.line >= ranges[i].head.line) {
+        cursorInd = i;
       }
-
-      cm.replaceSelections(replacements, 'around');
-    } else {
-      var cursor = cm.getCursor();
-      cm.replaceRange(replaceFcn('', { anchor: cursor, head: cursor }), cursor);
-      cm.setCursor({ line: cursor.line + cursorOffset.line, ch: cursor.ch + cursorOffset.ch });
     }
+
+    cm.replaceSelections(replacements, 'around');
   };
 
   $('#actions').addEventListener('click', function (e) {
@@ -287,6 +301,11 @@
     var url = window.prompt('Enter a URL to import a lesson from');
 
     if (url !== null) {
+      if (/^(?:https?:\/\/)?github.com/.test(url)) {
+        // Switch to githubusercontent.com
+        url = url.replace(/^.+?\.com\/(.+)\/(.+)\/(?:raw|blob)\/(.+)$/i, "https://raw.githubusercontent.com/$1/$2/$3");
+      }
+
       cm.setValue('Loading lesson from ' + url + '...');
 
       fetch(url).then(function (resp) {
@@ -312,6 +331,10 @@
         cmUpdate();
 
         render();
+      }).catch(function (err) {
+        cm.setValue('Error fetching lesson: ' + err.message);
+
+        preview.innerHTML = '<pre style=\'color:#c00\'>Error fetching lesson: ' + err.message + '</pre>';
       });
     }
   });

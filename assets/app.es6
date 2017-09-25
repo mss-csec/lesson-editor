@@ -246,21 +246,36 @@
       return splitLines.join('\n');
     };
 
-    if (cm.somethingSelected()) {
-      let selections = cm.getSelections(),
-          ranges = cm.listSelections(),
-          replacements = [];
+    let selections = cm.getSelections(),
+        ranges = cm.listSelections(),
+        replacements = [],
+        cursor = cm.getCursor(),
+        cursorInd = 0;
 
-      for (let i=0; i<selections.length; i++) {
-        replacements.push(replaceFcn(selections[i], ranges[i]));
+    for (let i=0; i<selections.length; i++) {
+      replacements.push(replaceFcn(selections[i], ranges[i]));
+
+      // if (selections[i].length > 0) {
+      //   selections[i] = {
+      //     anchor: {
+      //       line: ranges[i].anchor
+      //     }
+      //   };
+      // } else {
+      //   let oCursor = {
+      //     line: ranges[i].anchor.line + cursorOffset.line,
+      //     ch: ranges[i].anchor.ch + cursorOffset.ch
+      //   };
+      //   selections[i] = { anchor: oCursor, head: oCursor };
+      // }
+
+      if ((ranges[i].anchor.line <= cursor.line && cursor.line <= ranges[i].head.line) ||
+        (ranges[i].anchor.line >= cursor.line && cursor.line >= ranges[i].head.line)) {
+        cursorInd = i;
       }
-
-      cm.replaceSelections(replacements, 'around');
-    } else {
-      let cursor = cm.getCursor();
-      cm.replaceRange(replaceFcn('', { anchor: cursor, head: cursor }), cursor);
-      cm.setCursor({ line: cursor.line + cursorOffset.line, ch: cursor.ch + cursorOffset.ch});
     }
+
+    cm.replaceSelections(replacements, 'around');
   }
 
   $('#actions').addEventListener('click', (e) => {
@@ -282,6 +297,12 @@
     let url = window.prompt('Enter a URL to import a lesson from');
 
     if (url !== null) {
+      if (/^(?:https?:\/\/)?github.com/.test(url)) {
+        // Switch to githubusercontent.com
+        url = url.replace(/^.+?\.com\/(.+)\/(.+)\/(?:raw|blob)\/(.+)$/i,
+          "https://raw.githubusercontent.com/$1/$2/$3");
+      }
+
       cm.setValue(`Loading lesson from ${url}...`);
 
       fetch(url)
@@ -307,6 +328,10 @@
           cmUpdate();
 
           render();
+        }).catch((err) => {
+          cm.setValue('Error fetching lesson: ' + err.message);
+
+          preview.innerHTML = `<pre style='color:#c00'>Error fetching lesson: ${err.message}</pre>`;
         });
     }
   })
