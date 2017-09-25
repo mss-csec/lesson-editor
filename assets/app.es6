@@ -25,20 +25,7 @@
 
   const md = new Remarkable('full', {
     html: true,
-    linkify: true,
-    highlight: (str, lang) => {
-      if (lang && hljs.getLanguage(lang)) {
-        try {
-          return hljs.highlight(lang, str).value;
-        } catch (err) {}
-      }
-
-      try {
-        return hljs.highlightAuto(str).value;
-      } catch (err) {}
-
-      return ''; // use external default escaping
-    }
+    linkify: true
   });
   md.core.ruler.disable([ 'abbr' ]);
   md.inline.ruler.disable([ 'ins', 'mark' ]);
@@ -100,19 +87,6 @@
     } else if (globals.mode === 'asciidoc') {
       let converted = adoc.convert(src, { attributes: { showTitle: true, pp: '++', cpp: 'C++' } });
 
-      // Code blocks
-      converted = converted.replace(
-        /\{%\s*highlight(\s+[a-zA-Z0-9]+)?(\s+[a-zA-Z0-9]+)?\s*%\}((?:.|\s)*?)\{%\s*endhighlight\s*%\}/gm,
-        (_, lang, linenos, code) => {
-          lang = lang.trim();
-          // linenos = linenos.trim();
-          if (lang === 'linenos') {
-            [ lang, linenos ] = [ linenos, lang ];
-          }
-          return `<pre><code class="language-${lang}">${hljs.highlight(lang, code).value}</code></pre>`;
-        }
-      );
-
       // LaTeX
       converted = converted.replace(
         /\\(\(|\[)([\s\S]+?)\\(\)|\])/g,
@@ -143,6 +117,11 @@
   let render = () => {
     convert(cm.getValue()).then((rendered) => {
       preview.innerHTML = rendered;
+
+      // highlight blocks
+      $$(preview, 'pre code[class|="language"]').forEach((block) => {
+        hljs.highlightBlock(block);
+      });
     }, (errMsg) => {
       preview.innerHTML = `<pre style="color:#c00">${errMsg}</pre>`;
     });
@@ -155,16 +134,16 @@
   let actionDelims = {
     bold: { markdown: ['**', '**'], asciidoc: ['**', '**'] },
     italic: { markdown: ['_', '_'], asciidoc: ['__', '__'] },
-    strike: { markdown: ['~~', '~~'], asciidoc: ['[line-through]#', '#'] },
+    strike: { markdown: ['~~', '~~'], asciidoc: ['[line-through]##', '##'] },
     u_list: { markdown: ['- ', ''], asciidoc: ['* ', ''] },
     o_list: { markdown: ['{0}. ', ''], asciidoc: ['. ', ''] },
-    code: { markdown: ['`', '`', 'block', '```{0}', '```'], asciidoc: ['``', '``', 'block', '++++\n{% highlight {0} %}', '{% endhighlight %}\n++++'] },
+    code: { markdown: ['`', '`', 'block', '```{0}', '```'], asciidoc: ['``', '``', 'block', '[source,{0}]\n----', '----'] },
     quote: { markdown: ['> ', ''], asciidoc: ['block', '[quote, <author>]\n____', '____'] },
     heading: { markdown: ['#{0} ', ''], asciidoc: ['={0} ', ''] },
     'heading+1': { markdown: ['#{0} ', ''], asciidoc: ['={0} ', ''] },
     math: { markdown: ['$$', '$$', 'block', '$$', '$$'], asciidoc: ['\\(', '\\)', 'block', '\\[', '\\]'] },
-    link: { markdown: ['[', '](<link URL>)'], asciidoc: ['link:<link URL>[', ']'] },
-    image: { markdown: ['![', '](<image URL>)'], asciidoc: ['image:<image URL>[', ']'] },
+    link: { markdown: ['[', '](<link URL>)'], asciidoc: ['link:++<link URL>++[', ']'] },
+    image: { markdown: ['![', '](<image URL>)'], asciidoc: ['image:++<image URL>++[', ']'] },
     ftnote: { markdown: ['[^{0}]\n\n[^{0}]: ', ''], asciidoc: ['footnote:[', ']'] },
   };
 
