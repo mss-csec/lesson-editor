@@ -1,5 +1,5 @@
 body {
-    font: 1rem/1.5 sans-serif;
+    /*font: 1rem/1.5 sans-serif;*/
 }
 main {
     display: flex;
@@ -11,7 +11,7 @@ main {
     flex: 1;
     min-height: 100vh;
     max-height: 100vh;
-    max-width: 50%;
+    overflow: hidden;
 }
 #handlebar {
     background-color: grey;
@@ -20,6 +20,7 @@ main {
 }
 #actions {
     height: 25px;
+    background-color: #eee;
     border-bottom: 1px solid grey;
 }
 .separator {
@@ -37,6 +38,26 @@ main {
     overflow: auto;
 }
 
+#actions button {
+  padding: 0 .2em;
+  min-width: 20px;
+  width: auto;
+  height: auto;
+  font: inherit;
+  border: none;
+  margin: 0;
+  color: inherit;
+  line-height: 20px;
+  text-transform: none;
+}
+#actions button:hover {
+  color: #fff;
+  background-color: #333;
+}
+#converter {
+  height: auto;
+  padding: 0;
+}
 #actions [action="bold"] {
     font-weight: bold;
 }
