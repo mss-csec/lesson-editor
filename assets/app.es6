@@ -64,46 +64,62 @@
     }
 
     if (globals.mode === 'markdown') {
-      // Replace LaTeX tags
-      src = src.replace(
-        /([^$\n]*\n)?\$\$([^$]+?)\$\$([^$\n]*\n)?/gm,
-        (_, pre, code, post) => {
-          if (pre !== undefined && pre.length && emptyLine.test(pre) &&
-            post !== undefined && post.length && emptyLine.test(post)) {
-            // display
-            return pre +
-              katex.renderToString(code, { displayMode: true, throwOnError: false }) +
-              post;
-          } else {
-            // inline
-            return (pre || '') +
-              katex.renderToString(code, { throwOnError: false }) +
-              (post || '');
+      setTimeout(() => {
+        // Replace LaTeX tags
+        src = src.replace(
+          /([^$\n]*\n)?\$\$([^$]+?)\$\$([^$\n]*\n)?/gm,
+          (_, pre, code, post) => {
+            if (pre !== undefined && pre.length && emptyLine.test(pre) &&
+              post !== undefined && post.length && emptyLine.test(post)) {
+              // display
+              return pre +
+                katex.renderToString(code, { displayMode: true, throwOnError: false }) +
+                post;
+            } else {
+              // inline
+              return (pre || '') +
+                katex.renderToString(code, { throwOnError: false }) +
+                (post || '');
+            }
           }
-        }
-      );
+        );
 
-      resolve(md.render(src));
+        resolve(md.render(src));
+      }, 0);
     } else if (globals.mode === 'asciidoc') {
-      let converted = adoc.convert(src, { attributes: { showTitle: true, pp: '++', cpp: 'C++' } });
+      setTimeout(() => {
+        let converted = adoc.convert(src, { attributes: { showTitle: true, pp: '++', cpp: 'C++' } });
 
-      // LaTeX
-      converted = converted.replace(
-        /\\(\(|\[)([\s\S]+?)\\(\)|\])/g,
-        (_, open, code, close) => {
-          if (open === '[' && close === ']') {
-            // display
-            return katex.renderToString(code, { displayMode: true, throwOnError: false});
-          } else if (open === '(' && close === ')') {
-            // inline
-            return katex.renderToString(code, { throwOnError: false });
-          } else {
-            return _;
+        // Code blocks
+        converted = converted.replace(
+          /\{%\s*highlight(\s+[a-zA-Z0-9]+)?(\s+[a-zA-Z0-9]+)?\s*%\}(?:\s*?\n)?((?:.|\s)*?)\{%\s*endhighlight\s*%\}/gm,
+          (_, lang, linenos, code) => {
+            lang = lang.trim();
+            if (lang === 'linenos') {
+              [ lang, linenos ] = [ linenos, lang ];
+            }
+            return `<pre><code class="language-${lang}">${code}</code></pre>`;
           }
-        }
-      );
+        );
 
-      resolve(converted);
+        // LaTeX
+        converted = converted.replace(
+          /\\(\(|\[)([\s\S]+?)\\(\)|\])/g,
+          (_, open, code, close) => {
+            if (open === '[' && close === ']') {
+              // display
+              return katex.renderToString(code, { displayMode: true, throwOnError: false});
+            } else if (open === '(' && close === ')') {
+              // inline
+              return katex.renderToString(code, { throwOnError: false });
+            } else {
+              return _;
+            }
+          }
+        );
+
+        resolve(converted);
+      }, 0);
     } else {
       resolve(src);
     }

@@ -77,35 +77,50 @@
       }
 
       if (globals.mode === 'markdown') {
-        // Replace LaTeX tags
-        src = src.replace(/([^$\n]*\n)?\$\$([^$]+?)\$\$([^$\n]*\n)?/gm, function (_, pre, code, post) {
-          if (pre !== undefined && pre.length && emptyLine.test(pre) && post !== undefined && post.length && emptyLine.test(post)) {
-            // display
-            return pre + katex.renderToString(code, { displayMode: true, throwOnError: false }) + post;
-          } else {
-            // inline
-            return (pre || '') + katex.renderToString(code, { throwOnError: false }) + (post || '');
-          }
-        });
+        setTimeout(function () {
+          // Replace LaTeX tags
+          src = src.replace(/([^$\n]*\n)?\$\$([^$]+?)\$\$([^$\n]*\n)?/gm, function (_, pre, code, post) {
+            if (pre !== undefined && pre.length && emptyLine.test(pre) && post !== undefined && post.length && emptyLine.test(post)) {
+              // display
+              return pre + katex.renderToString(code, { displayMode: true, throwOnError: false }) + post;
+            } else {
+              // inline
+              return (pre || '') + katex.renderToString(code, { throwOnError: false }) + (post || '');
+            }
+          });
 
-        resolve(md.render(src));
+          resolve(md.render(src));
+        }, 0);
       } else if (globals.mode === 'asciidoc') {
-        var converted = adoc.convert(src, { attributes: { showTitle: true, pp: '++', cpp: 'C++' } });
+        setTimeout(function () {
+          var converted = adoc.convert(src, { attributes: { showTitle: true, pp: '++', cpp: 'C++' } });
 
-        // LaTeX
-        converted = converted.replace(/\\(\(|\[)([\s\S]+?)\\(\)|\])/g, function (_, open, code, close) {
-          if (open === '[' && close === ']') {
-            // display
-            return katex.renderToString(code, { displayMode: true, throwOnError: false });
-          } else if (open === '(' && close === ')') {
-            // inline
-            return katex.renderToString(code, { throwOnError: false });
-          } else {
-            return _;
-          }
-        });
+          // Code blocks
+          converted = converted.replace(/\{%\s*highlight(\s+[a-zA-Z0-9]+)?(\s+[a-zA-Z0-9]+)?\s*%\}(?:\s*?\n)?((?:.|\s)*?)\{%\s*endhighlight\s*%\}/gm, function (_, lang, linenos, code) {
+            lang = lang.trim();
+            if (lang === 'linenos') {
+              var _ref = [linenos, lang];
+              lang = _ref[0];
+              linenos = _ref[1];
+            }
+            return '<pre><code class="language-' + lang + '">' + code + '</code></pre>';
+          });
 
-        resolve(converted);
+          // LaTeX
+          converted = converted.replace(/\\(\(|\[)([\s\S]+?)\\(\)|\])/g, function (_, open, code, close) {
+            if (open === '[' && close === ']') {
+              // display
+              return katex.renderToString(code, { displayMode: true, throwOnError: false });
+            } else if (open === '(' && close === ')') {
+              // inline
+              return katex.renderToString(code, { throwOnError: false });
+            } else {
+              return _;
+            }
+          });
+
+          resolve(converted);
+        }, 0);
       } else {
         resolve(src);
       }
@@ -161,9 +176,9 @@
       blockDelim = actionDelim.slice(ind + 1);
     }
 
-    var replaceFcn = function replaceFcn(content, _ref) {
-      var anchor = _ref.anchor,
-          head = _ref.head;
+    var replaceFcn = function replaceFcn(content, _ref2) {
+      var anchor = _ref2.anchor,
+          head = _ref2.head;
 
       var splitLines = content.split('\n'),
           mode = void 0;
@@ -184,12 +199,12 @@
         // Normalize so that anchor is always before head
 
         if (aLine > hLine || aLine === hLine && aCh > hCh) {
-          var _ref2 = [hLine, aLine];
-          aLine = _ref2[0];
-          hLine = _ref2[1];
-          var _ref3 = [hCh, aCh];
-          aCh = _ref3[0];
-          hCh = _ref3[1];
+          var _ref3 = [hLine, aLine];
+          aLine = _ref3[0];
+          hLine = _ref3[1];
+          var _ref4 = [hCh, aCh];
+          aCh = _ref4[0];
+          hCh = _ref4[1];
         }
 
         if (aCh === 0 && (emptyLine.test(cm.getLine(aLine - 1)) || aLine < hLine && hCh === 0 || hCh !== 0 && hCh === cm.getLine(hLine).length)) {
