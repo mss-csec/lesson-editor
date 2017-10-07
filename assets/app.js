@@ -51,22 +51,37 @@
 
   var convert = function convert(src) {
     return new Promise(function (resolve, reject) {
+      // check char encoding
+      var asciiRegex = /[^\x00-\x7F]/g;
+      if (/[^\x00-\x7F]/.test(src)) {
+        var strBuilder = [],
+            regArr = void 0;
+        while ((regArr = asciiRegex.exec(src)) !== null) {
+          var _cm$posFromIndex = cm.posFromIndex(regArr.index),
+              line = _cm$posFromIndex.line,
+              ch = _cm$posFromIndex.ch;
+
+          strBuilder.push('    "' + regArr[0] + '" at Line ' + (line + 1) + ' Ch ' + ch);
+        }
+        reject('Invalid character sequence(s)\n' + strBuilder.join('\n'));
+      }
+
       // Extract YAML
       if (src.slice(0, 3) === '---') {
         var splitSrc = src.split('\n'),
             yaml = [],
             metadata = {},
-            line = 1; // offset by 1 for ending delim
-        for (; line < splitSrc.length; line++) {
-          if (splitSrc[line] === '---') {
-            line++;
+            _line = 1; // offset by 1 for ending delim
+        for (; _line < splitSrc.length; _line++) {
+          if (splitSrc[_line] === '---') {
+            _line++;
             break;
           }
-          yaml.push(splitSrc[line]);
+          yaml.push(splitSrc[_line]);
         }
         try {
           metadata = jsyaml.safeLoad(yaml.join('\n'));
-          src = splitSrc.slice(line).join('\n');
+          src = splitSrc.slice(_line).join('\n');
         } catch (e) {
           reject('JSYaml: ' + e.message);
         }
@@ -96,7 +111,7 @@
           var converted = adoc.convert(src, { attributes: { showTitle: true, pp: '++', cpp: 'C++' } });
 
           // Code blocks
-          converted = converted.replace(/\{%\s*highlight(\s+[a-zA-Z0-9]+)?(\s+[a-zA-Z0-9]+)?\s*%\}(?:\s*?\n)?((?:.|\s)*?)\{%\s*endhighlight\s*%\}/gm, function (_, lang, linenos, code) {
+          converted = converted.replace(/\{%\s*highlight(\s+[a-zA-Z0-9]+)?(\s+[a-zA-Z0-9]+)?\s*%\}(?:\s*?\n)?([\s\S]*?)\{%\s*endhighlight\s*%\}/gm, function (_, lang, linenos, code) {
             lang = lang.trim();
             if (lang === 'linenos') {
               var _ref = [linenos, lang];

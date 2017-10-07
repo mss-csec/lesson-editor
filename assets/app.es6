@@ -38,6 +38,17 @@
   };
 
   let convert = (src) => new Promise((resolve, reject) => {
+    // check char encoding
+    let asciiRegex = /[^\x00-\x7F]/g;
+    if (/[^\x00-\x7F]/.test(src)) {
+      let strBuilder = [], regArr;
+      while ((regArr = asciiRegex.exec(src)) !== null) {
+        let { line, ch } = cm.posFromIndex(regArr.index);
+        strBuilder.push(`    "${regArr[0]}" at Line ${line+1} Ch ${ch}`);
+      }
+      reject('Invalid character sequence(s)\n' + strBuilder.join('\n'));
+    }
+
     // Extract YAML
     if (src.slice(0,3) === '---') {
       let splitSrc = src.split('\n'),
@@ -92,7 +103,7 @@
 
         // Code blocks
         converted = converted.replace(
-          /\{%\s*highlight(\s+[a-zA-Z0-9]+)?(\s+[a-zA-Z0-9]+)?\s*%\}(?:\s*?\n)?((?:.|\s)*?)\{%\s*endhighlight\s*%\}/gm,
+          /\{%\s*highlight(\s+[a-zA-Z0-9]+)?(\s+[a-zA-Z0-9]+)?\s*%\}(?:\s*?\n)?([\s\S]*?)\{%\s*endhighlight\s*%\}/gm,
           (_, lang, linenos, code) => {
             lang = lang.trim();
             if (lang === 'linenos') {
