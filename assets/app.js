@@ -128,7 +128,14 @@
         }, 0);
       } else if (globals.mode === 'asciidoc') {
         setTimeout(function () {
-          var converted = adoc.convert(src, { attributes: { showTitle: true, pp: '++', cpp: 'C++' } }),
+          var converted = adoc.convert(src, {
+            attributes: {
+              showTitle: true,
+              stem: 'latexmath',
+              pp: '++',
+              cpp: 'C++'
+            }
+          }),
               isDeprecated = false;
 
           // Code blocks
@@ -213,7 +220,7 @@
     quote: { markdown: ['> ', ''], asciidoc: ['block', '[quote, <author>]\n____', '____'] },
     heading: { markdown: ['#{0} ', ''], asciidoc: ['={0} ', ''] },
     'heading+1': { markdown: ['#{0} ', ''], asciidoc: ['={0} ', ''] },
-    math: { markdown: ['$$', '$$', 'block', '$$', '$$'], asciidoc: ['\\(', '\\)', 'block', '\\[', '\\]'] },
+    math: { markdown: ['$$', '$$', 'block', '$$', '$$'], asciidoc: ['stem:[', ']', 'block', '[stem]\n++++', '++++'] },
     link: { markdown: ['[', '](<link URL>)'], asciidoc: ['link:++<link URL>++[', ']'] },
     image: { markdown: ['![', '](<image URL>)'], asciidoc: ['image:++<image URL>++[', ']'] },
     ftnote: { markdown: ['[^{0}]\n\n[^{0}]: ', ''], asciidoc: ['footnote:[', ']'] }
@@ -274,12 +281,12 @@
       switch (mode) {
         case 'block':
           // Undo action if already applied
-          if (content.slice(0, blockDelim[0].length) === blockDelim[0] && content.slice(-blockDelim[1].length) === blockDelim[1]) {
-            return content.slice(blockDelim[0].length + 1, -blockDelim[1].length - 1);
+          if (content.slice(0, blockDelim[0].length) === blockDelim[0] && content.slice(-blockDelim[1].length === blockDelim[1] || content.slice(-blockDelim[1].length - 1) === blockDelim[1] + '\n')) {
+            return content.slice(blockDelim[0].length + 1, -blockDelim[1].length - (content.slice(-1) === '\n' ? 2 : 1));
           }
 
           splitLines.unshift(blockDelim[0]);
-          splitLines.push(blockDelim[1]);
+          splitLines.push(blockDelim[1] + '\n');
           cursorOffset = {
             line: blockDelim[0].split('\n').length,
             ch: blockDelim[0].split('\n').slice(-1)[0].length
