@@ -8,6 +8,26 @@
     return [].slice.call((!sel ? document : ctx).querySelectorAll(sel || ctx));
   };
 
+  // https://stackoverflow.com/a/12034334/3472393
+  var escapeHtml = function () {
+    var entityMap = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+      '/': '&#x2F;',
+      '`': '&#x60;',
+      '=': '&#x3D;'
+    };
+
+    return function (string) {
+      return String(string).replace(/[&<>"'`=\/]/g, function (s) {
+        return entityMap[s];
+      });
+    };
+  }();
+
   // Global presets
   var globals = {
     mode: 'markdown',
@@ -118,7 +138,7 @@
               lang = _ref[0];
               linenos = _ref[1];
             }
-            return '<pre><code class="language-' + lang + '">' + code + '</code></pre>';
+            return '<pre><code class="language-' + lang + '">' + escapeHtml(code) + '</code></pre>';
           });
 
           // LaTeX

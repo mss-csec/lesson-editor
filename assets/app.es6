@@ -2,6 +2,22 @@
   const $ = (ctx, sel) => (!sel ? document : ctx).querySelector(sel || ctx),
         $$ = (ctx, sel) => [].slice.call((!sel ? document : ctx).querySelectorAll(sel || ctx));
 
+  // https://stackoverflow.com/a/12034334/3472393
+  const escapeHtml = (() => {
+    const entityMap = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+      '/': '&#x2F;',
+      '`': '&#x60;',
+      '=': '&#x3D;'
+    };
+
+    return (string) => String(string).replace(/[&<>"'`=\/]/g, (s) => entityMap[s]);
+  })();
+
   // Global presets
   const globals = {
     mode: 'markdown',
@@ -109,7 +125,7 @@
             if (lang === 'linenos') {
               [ lang, linenos ] = [ linenos, lang ];
             }
-            return `<pre><code class="language-${lang}">${code}</code></pre>`;
+            return `<pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>`;
           }
         );
 
