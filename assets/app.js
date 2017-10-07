@@ -128,7 +128,8 @@
         }, 0);
       } else if (globals.mode === 'asciidoc') {
         setTimeout(function () {
-          var converted = adoc.convert(src, { attributes: { showTitle: true, pp: '++', cpp: 'C++' } });
+          var converted = adoc.convert(src, { attributes: { showTitle: true, pp: '++', cpp: 'C++' } }),
+              isDeprecated = false;
 
           // Code blocks
           converted = converted.replace(/\{%\s*highlight(\s+[a-zA-Z0-9]+)?(\s+[a-zA-Z0-9]+)?\s*%\}(?:\s*?\n)?([\s\S]*?)\{%\s*endhighlight\s*%\}/gm, function (_, lang, linenos, code) {
@@ -138,6 +139,7 @@
               lang = _ref[0];
               linenos = _ref[1];
             }
+            isDeprecated = true;
             return '<pre><code class="language-' + lang + '">' + escapeHtml(code) + '</code></pre>';
           });
 
@@ -153,6 +155,24 @@
               return _;
             }
           });
+
+          if (isDeprecated) {
+            // set depr. notice
+            var deprBuilder = [],
+                codeRegex = /\{%\s*highlight.*%\}[\s\S]*?\{%\s*endhighlight\s*%\}/gm,
+                rawSrc = cm.getValue(),
+                codeArr = void 0;
+
+            while ((codeArr = codeRegex.exec(rawSrc)) !== null) {
+              var _cm$posFromIndex2 = cm.posFromIndex(codeArr.index),
+                  _line2 = _cm$posFromIndex2.line,
+                  _ch = _cm$posFromIndex2.ch;
+
+              deprBuilder.push('    Deprecated highlight syntax at Line ' + _line2 + ' Ch ' + _ch);
+            }
+
+            converted = '<pre style="color:#ca0">' + deprBuilder.join('\n') + '</pre>\n  ' + converted;
+          }
 
           resolve(converted);
         }, 0);

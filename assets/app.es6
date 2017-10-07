@@ -115,7 +115,8 @@
       }, 0);
     } else if (globals.mode === 'asciidoc') {
       setTimeout(() => {
-        let converted = adoc.convert(src, { attributes: { showTitle: true, pp: '++', cpp: 'C++' } });
+        let converted = adoc.convert(src, { attributes: { showTitle: true, pp: '++', cpp: 'C++' } }),
+            isDeprecated = false;
 
         // Code blocks
         converted = converted.replace(
@@ -125,6 +126,7 @@
             if (lang === 'linenos') {
               [ lang, linenos ] = [ linenos, lang ];
             }
+            isDeprecated = true;
             return `<pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>`;
           }
         );
@@ -144,6 +146,22 @@
             }
           }
         );
+
+        if (isDeprecated) {
+          // set depr. notice
+          let deprBuilder = [],
+              codeRegex = /\{%\s*highlight.*%\}[\s\S]*?\{%\s*endhighlight\s*%\}/gm,
+              rawSrc = cm.getValue(),
+              codeArr;
+
+          while ((codeArr = codeRegex.exec(rawSrc)) !== null) {
+            let { line, ch } = cm.posFromIndex(codeArr.index);
+            deprBuilder.push(`    Deprecated highlight syntax at Line ${line} Ch ${ch}`);
+          }
+
+          converted = `<pre style="color:#ca0">${deprBuilder.join('\n')}</pre>
+  ${converted}`;
+        }
 
         resolve(converted);
       }, 0);
