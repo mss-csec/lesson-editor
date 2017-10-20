@@ -24,7 +24,6 @@
     theme: 'default'
   };
 
-  const convDelta = 200;
   const emptyLine = /^\s*$/;
   const storageKey = 'EDITOR_LOCAL';
 
@@ -49,6 +48,35 @@
   const adoc = Asciidoctor();
 
   // Functions
+
+  let Messages = {
+    el: $('#messages'),
+    clear() {
+      this.el.dataset.style = '';
+      this.el.innerHTML = '';
+    },
+    get message() {
+      return this.el.textContent;
+    },
+    set message(m) {
+      this.el.textContent = m;
+      this.el.insertAdjacentHTML('afterbegin',
+        `<span id='messages-close'></span>`);
+    },
+    get messageHTML() {
+      return this.el.innerHTML;
+    },
+    set messageHTML(m) {
+      this.el.innerHTML = `<span id='messages-close'></span>` + m;
+    },
+    get style() {
+      return this.el.dataset.style;
+    },
+    set style(s) {
+      this.el.dataset.style = s;
+    }
+  };
+
   let strFmt = (str, ...args) => {
     return str.replace(/\{(\d+)\}/g, (_, i) => ((i|0) < args.length) ? args[i|0] : _);
   };
@@ -62,7 +90,7 @@
         let { line, ch } = cm.posFromIndex(regArr.index);
         strBuilder.push(`    "${regArr[0]}" at Line ${line+1} Ch ${ch}`);
       }
-      reject('Invalid character sequence(s)\n' + strBuilder.join('\n'));
+      return reject('Invalid character sequence(s)\n' + strBuilder.join('\n'));
     }
 
     // Extract YAML
@@ -82,7 +110,7 @@
         metadata = jsyaml.safeLoad(yaml.join('\n'));
         src = splitSrc.slice(line).join('\n');
       } catch (e) {
-        reject('JSYaml: ' + e.message);
+        return reject('JSYaml: ' + e.message);
       }
 
       if (metadata && metadata.hasOwnProperty('title')) {
@@ -119,6 +147,7 @@
               attributes: {
                 showTitle: true,
                 stem: 'latexmath',
+                'source-language': 'cpp',
                 pp: '++',
                 cpp: 'C++'
               }
@@ -166,8 +195,8 @@
             deprBuilder.push(`    Deprecated highlight syntax at Line ${line} Ch ${ch}`);
           }
 
-          converted = `<pre style="color:#ca0">${deprBuilder.join('\n')}</pre>
-  ${converted}`;
+          Messages.style = 'warning';
+          Messages.message = deprBuilder.join('\n');
         }
 
         resolve(converted);
@@ -183,6 +212,8 @@
   };
 
   let render = () => {
+    Messages.clear();
+
     convert(cm.getValue()).then((rendered) => {
       preview.innerHTML = rendered;
 
@@ -190,8 +221,12 @@
       $$(preview, 'pre code[class|="language"]').forEach((block) => {
         hljs.highlightBlock(block);
       });
+      $$(preview, 'pre.highlight code').forEach((block) => {
+        hljs.highlightBlock(block);
+      });
     }, (errMsg) => {
-      preview.innerHTML = `<pre style="color:#c00">${errMsg}</pre>`;
+      Messages.style = 'error';
+      Messages.message = errMsg;
     });
 
     localStorage.setItem(storageKey,
@@ -373,10 +408,17 @@
           "https://raw.githubusercontent.com/$1/$2/$3");
       }
 
-      cm.setValue(`Loading lesson from ${url}...`);
+      Messages.style = 'info';
+      Messages.message = `Loading lesson from ${url}...`;
 
       fetch(url)
-        .then((resp) => resp.text())
+        .then((resp) => {
+          if (resp.ok) {
+            return resp.text();
+          } else {
+            throw new Error(`${resp.status} ${resp.statusText}`);
+          }
+        })
         .then((text) => {
           switch (url.slice(url.lastIndexOf('.') + 1)) {
           case 'markdn':
@@ -399,14 +441,28 @@
 
           render();
         }).catch((err) => {
-          cm.setValue('Error fetching lesson: ' + err.message);
-
-          preview.innerHTML = `<pre style='color:#c00'>Error fetching lesson: ${err.message}</pre>`;
+          Messages.style = 'error';
+          Messages.message = `Error fetching lesson: ${err.message}`;
         });
     }
-  })
+  });
+
+  $('#export_link').addEventListener('click', () => {
+    let value = encodeURIComponent(cm.getValue());
+
+    Messages.style = 'info';
+    Messages.messageHTML = `Copy link:
+    <input onclick='this.setSelectionRange(0,this.value.length)' type='text' value='${location.href}#${globals.mode}:${value}'>`;
+  });
 
   // Page init
+
+  // Event listeners
+  $('#messages').addEventListener('click', (e) => {
+    if (e.target && e.target.id === 'messages-close') {
+      Messages.clear();
+    }
+  });
 
   // Load prev content, if existant
   if (localStorage.getItem(storageKey)) {
@@ -418,19 +474,46 @@
     $('#converter').value = store.mode;
   }
 
-  let convTimeout = null,
+  let convDelta = 200,
+      convTimeout = null,
       convTimestamp = 0;
 
-  cm.on('change', () => {
+  let convListener = () => {
     if (Date.now() - convTimestamp > convDelta) {
       clearTimeout(convTimeout);
       convTimestamp = Date.now();
 
       convTimeout = setTimeout(render, convDelta);
     }
-  });
+  };
+
+  cm.on('change', convListener);
 
   cmUpdate();
 
   render();
+
+  // Load from hash, if existant
+  if (location.hash.length > 1 && ~location.hash.indexOf(':')) {
+    let hash = location.hash.slice(1).split(':'),
+        mode = decodeURIComponent(hash[0]),
+        content = decodeURIComponent(hash[1]),
+        message = `You've clicked (or entered) a link that someone saved for this editor.
+Continuing will replace the text in the editor with the text contained in the link.
+As well, there are security implications with continuing if your source is untrusted.
+If you continue, you will have five seconds to undo the replacement before it is rendered.
+Are you sure you want to continue?`;
+
+    if (confirm(message)) {
+      // give 5 seconds to undo changes
+      let oldConvDelta = convDelta;
+      convDelta = 5000;
+      setTimeout(() => { convDelta = oldConvDelta }, oldConvDelta);
+
+      globals.mode = mode;
+      cm.setValue(content);
+
+      cmUpdate();
+    }
+  }
 })();

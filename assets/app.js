@@ -34,7 +34,6 @@
     theme: 'default'
   };
 
-  var convDelta = 200;
   var emptyLine = /^\s*$/;
   var storageKey = 'EDITOR_LOCAL';
 
@@ -59,6 +58,35 @@
   var adoc = Asciidoctor();
 
   // Functions
+
+  var Messages = {
+    el: $('#messages'),
+    clear: function clear() {
+      this.el.dataset.style = '';
+      this.el.innerHTML = '';
+    },
+
+    get message() {
+      return this.el.textContent;
+    },
+    set message(m) {
+      this.el.textContent = m;
+      this.el.insertAdjacentHTML('afterbegin', '<span id=\'messages-close\'></span>');
+    },
+    get messageHTML() {
+      return this.el.innerHTML;
+    },
+    set messageHTML(m) {
+      this.el.innerHTML = '<span id=\'messages-close\'></span>' + m;
+    },
+    get style() {
+      return this.el.dataset.style;
+    },
+    set style(s) {
+      this.el.dataset.style = s;
+    }
+  };
+
   var strFmt = function strFmt(str) {
     for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
       args[_key - 1] = arguments[_key];
@@ -83,7 +111,7 @@
 
           strBuilder.push('    "' + regArr[0] + '" at Line ' + (line + 1) + ' Ch ' + ch);
         }
-        reject('Invalid character sequence(s)\n' + strBuilder.join('\n'));
+        return reject('Invalid character sequence(s)\n' + strBuilder.join('\n'));
       }
 
       // Extract YAML
@@ -103,7 +131,7 @@
           metadata = jsyaml.safeLoad(yaml.join('\n'));
           src = splitSrc.slice(_line).join('\n');
         } catch (e) {
-          reject('JSYaml: ' + e.message);
+          return reject('JSYaml: ' + e.message);
         }
 
         if (metadata && metadata.hasOwnProperty('title')) {
@@ -132,6 +160,7 @@
             attributes: {
               showTitle: true,
               stem: 'latexmath',
+              'source-language': 'cpp',
               pp: '++',
               cpp: 'C++'
             }
@@ -178,7 +207,8 @@
               deprBuilder.push('    Deprecated highlight syntax at Line ' + _line2 + ' Ch ' + _ch);
             }
 
-            converted = '<pre style="color:#ca0">' + deprBuilder.join('\n') + '</pre>\n  ' + converted;
+            Messages.style = 'warning';
+            Messages.message = deprBuilder.join('\n');
           }
 
           resolve(converted);
@@ -195,6 +225,8 @@
   };
 
   var render = function render() {
+    Messages.clear();
+
     convert(cm.getValue()).then(function (rendered) {
       preview.innerHTML = rendered;
 
@@ -202,8 +234,12 @@
       $$(preview, 'pre code[class|="language"]').forEach(function (block) {
         hljs.highlightBlock(block);
       });
+      $$(preview, 'pre.highlight code').forEach(function (block) {
+        hljs.highlightBlock(block);
+      });
     }, function (errMsg) {
-      preview.innerHTML = '<pre style="color:#c00">' + errMsg + '</pre>';
+      Messages.style = 'error';
+      Messages.message = errMsg;
     });
 
     localStorage.setItem(storageKey, JSON.stringify({ mode: globals.mode, value: cm.getValue() }));
@@ -383,10 +419,15 @@
         url = url.replace(/^.+?\.com\/(.+)\/(.+)\/(?:raw|blob)\/(.+)$/i, "https://raw.githubusercontent.com/$1/$2/$3");
       }
 
-      cm.setValue('Loading lesson from ' + url + '...');
+      Messages.style = 'info';
+      Messages.message = 'Loading lesson from ' + url + '...';
 
       fetch(url).then(function (resp) {
-        return resp.text();
+        if (resp.ok) {
+          return resp.text();
+        } else {
+          throw new Error(resp.status + ' ' + resp.statusText);
+        }
       }).then(function (text) {
         switch (url.slice(url.lastIndexOf('.') + 1)) {
           case 'markdn':
@@ -409,14 +450,27 @@
 
         render();
       }).catch(function (err) {
-        cm.setValue('Error fetching lesson: ' + err.message);
-
-        preview.innerHTML = '<pre style=\'color:#c00\'>Error fetching lesson: ' + err.message + '</pre>';
+        Messages.style = 'error';
+        Messages.message = 'Error fetching lesson: ' + err.message;
       });
     }
   });
 
+  $('#export_link').addEventListener('click', function () {
+    var value = encodeURIComponent(cm.getValue());
+
+    Messages.style = 'info';
+    Messages.messageHTML = 'Copy link:\n    <input onclick=\'this.setSelectionRange(0,this.value.length)\' type=\'text\' value=\'' + location.href + '#' + globals.mode + ':' + value + '\'>';
+  });
+
   // Page init
+
+  // Event listeners
+  $('#messages').addEventListener('click', function (e) {
+    if (e.target && e.target.id === 'messages-close') {
+      Messages.clear();
+    }
+  });
 
   // Load prev content, if existant
   if (localStorage.getItem(storageKey)) {
@@ -428,20 +482,45 @@
     $('#converter').value = store.mode;
   }
 
-  var convTimeout = null,
+  var convDelta = 200,
+      convTimeout = null,
       convTimestamp = 0;
 
-  cm.on('change', function () {
+  var convListener = function convListener() {
     if (Date.now() - convTimestamp > convDelta) {
       clearTimeout(convTimeout);
       convTimestamp = Date.now();
 
       convTimeout = setTimeout(render, convDelta);
     }
-  });
+  };
+
+  cm.on('change', convListener);
 
   cmUpdate();
 
   render();
+
+  // Load from hash, if existant
+  if (location.hash.length > 1 && ~location.hash.indexOf(':')) {
+    var hash = location.hash.slice(1).split(':'),
+        mode = decodeURIComponent(hash[0]),
+        content = decodeURIComponent(hash[1]),
+        message = 'You\'ve clicked (or entered) a link that someone saved for this editor.\nContinuing will replace the text in the editor with the text contained in the link.\nAs well, there are security implications with continuing if your source is untrusted.\nIf you continue, you will have five seconds to undo the replacement before it is rendered.\nAre you sure you want to continue?';
+
+    if (confirm(message)) {
+      // give 5 seconds to undo changes
+      var oldConvDelta = convDelta;
+      convDelta = 5000;
+      setTimeout(function () {
+        convDelta = oldConvDelta;
+      }, oldConvDelta);
+
+      globals.mode = mode;
+      cm.setValue(content);
+
+      cmUpdate();
+    }
+  }
 })();
 //# sourceMappingURL=app.js.map

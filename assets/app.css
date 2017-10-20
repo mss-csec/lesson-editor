@@ -1,42 +1,42 @@
 body {
-    /*font: 1rem/1.5 sans-serif;*/
-    overflow: hidden;
+  /*font: 1rem/1.5 sans-serif;*/
+  overflow: hidden;
 }
 main {
-    display: flex;
-    flex-direction: row;
+  display: flex;
+  flex-direction: row;
 }
 #editor-area,
 #preview-area {
-    box-sizing: border-box;
-    flex: 1;
-    min-height: 100vh;
-    max-height: 100vh;
-    overflow: hidden;
+  box-sizing: border-box;
+  flex: 1;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
 }
 #handlebar {
-    background-color: grey;
-    flex: auto;
-    max-width: 5px;
+  background-color: grey;
+  flex: auto;
+  max-width: 5px;
 }
 #actions {
-    height: 25px;
-    background-color: #eee;
-    border-bottom: 1px solid grey;
+  height: 25px;
+  background-color: #eee;
+  border-bottom: 1px solid grey;
 }
 .separator {
-    border-right: 1px solid grey;
-    margin: 0 5px;
+  border-right: 1px solid grey;
+  margin: 0 5px;
 }
 #editor,
 .CodeMirror {
-    width: 100%;
-    min-height: calc(100vh - 26px);
-    max-height: calc(100vh - 26px);
+  width: 100%;
+  min-height: calc(100vh - 26px);
+  max-height: calc(100vh - 26px);
 }
 #preview-area {
-    padding: 5px;
-    overflow: auto;
+  padding: 5px;
+  overflow: auto;
 }
 
 #actions button {
@@ -60,11 +60,44 @@ main {
   padding: 0;
 }
 #actions [action="bold"] {
-    font-weight: bold;
+  font-weight: bold;
 }
 #actions [action="italic"] {
-    font-style: italic;
+  font-style: italic;
 }
 #actions [action="strike"] {
-    text-decoration: line-through;
+  text-decoration: line-through;
+}
+
+#messages {
+  position: sticky;
+  top: 0;
+  color: #111;
+  background-color: #ddd;
+  padding: 5px 10px;
+  z-index: 100;
+}
+#messages:empty {
+  display: none;
+}
+#messages[data-style='error'] {
+  background-color: #f68696;
+}
+#messages[data-style='info'] {
+  background-color: #bedbf8;
+}
+#messages[data-style='success'] {
+  background-color: #bff8be;
+}
+#messages[data-style='warning'] {
+  background-color: #f8e9be;
+}
+#messages-close {
+  float: right;
+  color: #212121;
+  text-decoration: underline;
+  cursor: pointer;
+}
+#messages-close::before {
+  content: 'Close';
 }
