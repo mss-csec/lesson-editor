@@ -1,11 +1,38 @@
+:root {
+  --brand-colour: #f52f2f;
+
+  --fg-primary: #232323;
+  --fg-secondary: #777;
+  --fg-accent: #fff;
+
+  --bg-primary: #fff;
+  --bg-secondary: #ededed;
+  --bg-tertiary: lighten($bg-secondary, 3%);
+  --bg-accent: $brand-colour;
+
+  --aria-highlight: #32acfb;
+
+  --t: transparent;
+}
+
 body {
-  /*font: 1rem/1.5 sans-serif;*/
   overflow: hidden;
 }
+
+body.dark-theme {
+  --fg-primary: #ededed;
+  --fg-secondary: #888;
+
+  --bg-primary: #1a1f2a;
+  --bg-secondary: #2c313c;
+  --bg-tertiary: darken($bg-secondary, 3%);
+}
+
 main {
   display: flex;
   flex-direction: row;
 }
+
 #editor-area,
 #preview-area {
   box-sizing: border-box;
@@ -15,17 +42,17 @@ main {
   overflow: hidden;
 }
 #handlebar {
-  background-color: grey;
+  background-color: var(--fg-secondary);
   flex: auto;
   max-width: 5px;
 }
 #actions {
   height: 25px;
-  background-color: #eee;
-  border-bottom: 1px solid grey;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--fg-secondary);
 }
 .separator {
-  border-right: 1px solid grey;
+  border-right: 1px solid var(--fg-secondary);
   margin: 0 5px;
 }
 #editor,
@@ -52,8 +79,8 @@ main {
   text-transform: none;
 }
 #actions button:hover {
-  color: #fff;
-  background-color: #333;
+  color: var(--bg-primary);
+  background-color: var(--fg-primary);
 }
 #converter {
   height: auto;
@@ -72,8 +99,8 @@ main {
 #messages {
   position: sticky;
   top: 0;
-  color: #111;
-  background-color: #ddd;
+  color: var(--fg-primary);
+  background-color: var(--bg-secondary);
   padding: 5px 10px;
   z-index: 100;
 }
@@ -94,7 +121,7 @@ main {
 }
 #messages-close {
   float: right;
-  color: #212121;
+  color: var(--fg-primary);
   text-decoration: underline;
   cursor: pointer;
 }

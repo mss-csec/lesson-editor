@@ -1,22 +1,25 @@
 'use strict';
 
 const gulp = require('gulp'),
-      babel = require('gulp-babel'),
-      rename = require('gulp-rename'),
-      sourcemaps = require('gulp-sourcemaps');
+      postcss = require('gulp-postcss'),
+      sourcemaps = require('gulp-sourcemaps'),
+      { scripts } = require('./tasks/webpack');
 
-gulp.task('build', () => {
-  gulp.src('assets/*.es6')
-    .pipe(rename({ extname: '.js' }))
+gulp.task('build:js', gulp.series(scripts));
+
+gulp.task('build:css', () => {
+  return gulp.src('app/app.css')
     .pipe(sourcemaps.init())
-    .pipe(babel({ presets: ['env'] }))
-    .on('error', function (err) { console.log(err.toString()); this.emit('end'); })
+    .pipe(postcss())
     .pipe(sourcemaps.write('.'))
-    .pipe(gulp.dest('assets'))
-});
+    .pipe(gulp.dest('assets/'));
+})
 
-gulp.task('watch', ['build'], () => {
-  gulp.watch('assets/*.es6', ['build']);
-});
+gulp.task('build', gulp.parallel('build:js', 'build:css'));
 
-gulp.task('default', ['build']);
+gulp.task('watch', gulp.series('build', function watchInside() {
+  gulp.watch('app/*.js', gulp.series('build:js'));
+  gulp.watch('app/*.css', gulp.series('build:css'));
+}));
+
+gulp.task('default', gulp.series('build'));
