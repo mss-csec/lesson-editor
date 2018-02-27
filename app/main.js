@@ -1,3 +1,121 @@
+import React from 'react';
+import ReactDOM from 'react-dom';
+
+import Editor from 'components/editor';
+import Preview from 'components/preview';
+
+class MainApp extends React.Component {
+  constructor(props) {
+    super(props);
+
+    let state = {
+      docs: [],
+      tabsList: [],
+      curDoc: 0,
+      curSrc: ''
+    };
+
+    state.loadedDocs = [
+      {
+        name: '',
+        src: `Welcome!`
+      }
+    ];
+
+    state.docs = state.loadedDocs.map(({ name, src }) => ({
+      history: {},
+      name,
+      src
+    }));
+
+    state.curSrc = state.docs[state.curDoc].src;
+
+    this.state = state;
+
+    this.updateState = this.updateState.bind(this);
+    this.changeState = this.changeState.bind(this);
+
+    // Converters
+
+    const md = new Remarkable('full', {
+                html: true,
+                linkify: true
+              }),
+          adoc = Asciidoctor();
+
+    md.core.ruler.disable([ 'abbr' ]);
+    md.inline.ruler.disable([ 'ins', 'mark' ])
+
+    this.converters = {
+      markdown(src) { return md.render(src) },
+      asciidoc(src) { return adoc.convert(src, {
+          attributes: {
+            showTitle: true,
+            stem: 'latexmath',
+            'source-language': 'cpp',
+            pp: '++',
+            cpp: 'C++'
+          }
+        });
+      }
+    };
+  }
+
+  updateState(text) {
+    this.setState({ curSrc: text });
+  }
+
+  changeState(text, history) {
+    let docs = this.state.docs;
+
+    docs[this.state.curDoc] = { history, text };
+
+    this.setState({ docs });
+  }
+
+  convert(src) {
+    return this.converters.asciidoc(src);
+  }
+
+  convertReact() {
+    return { __html: this.convert(this.state.curSrc) };
+  }
+
+  updateDocs(doc) {
+    let docs = this.state.docs; //
+
+    docs.map((d) => {
+      if (d.name === doc.name) {
+        return doc;
+      } else {
+        return d;
+      }
+    });
+
+    this.setState({ docs });
+  }
+
+  render() {
+    const { name, src, history } = this.state.docs[this.state.curDoc];
+
+    return <main>
+      <div id='editor-area'>
+        <Editor name={name}
+          src={src}
+          history={history}
+          updateState={this.updateState}
+          changeState={this.changeState} />
+      </div>
+      <div id='handlebar'></div>
+      <div id='preview-area'>
+        <Preview html={this.convertReact()} />
+      </div>
+    </main>;
+  }
+}
+
+ReactDOM.render(<MainApp />, document.querySelector('[react-app]'));
+
 (() => {
   const $ = (ctx, sel) => (!sel ? document : ctx).querySelector(sel || ctx),
         $$ = (ctx, sel) => [].slice.call((!sel ? document : ctx).querySelectorAll(sel || ctx));
