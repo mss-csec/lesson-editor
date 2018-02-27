@@ -35383,10 +35383,21 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 function Tab(props) {
+  var classes = ['TabBar-tab'];
+
+  if (props.num == props.curDoc) classes.push('TabBar-tab__selected');
+
   return _react2.default.createElement(
     'li',
-    { className: 'TabBar-tab ' + props.className },
-    props.name
+    { className: classes.join(' '),
+      onClick: props.selectTab },
+    props.name,
+    ' ',
+    _react2.default.createElement(
+      'a',
+      { onClick: props.closeTab },
+      '\xD7'
+    )
   );
 }
 
@@ -35396,18 +35407,41 @@ var TabBar = function (_React$Component) {
   function TabBar(props) {
     _classCallCheck(this, TabBar);
 
+    // tEMP
     var _this = _possibleConstructorReturn(this, (TabBar.__proto__ || Object.getPrototypeOf(TabBar)).call(this, props));
 
-    _this.onClick = _this.onClick.bind(_this);
+    _this.state = { docs: props.docs, curDoc: props.curDoc };
+
+    _this.updateCurDoc = _this.updateCurDoc.bind(_this);
+    _this.closeDoc = _this.closeDoc.bind(_this);
+    _this.makeNewDoc = _this.makeNewDoc.bind(_this);
     return _this;
   }
 
   _createClass(TabBar, [{
-    key: 'onClick',
-    value: function onClick(e) {
-      var target = e.target;
+    key: 'updateCurDoc',
+    value: function updateCurDoc(i, e) {
+      this.setState({ curDoc: i });
+    }
+  }, {
+    key: 'closeDoc',
+    value: function closeDoc(i, e) {
+      var docs = this.state.docs;
 
-      console.log(e.target);
+
+      docs.splice(i, 1);
+
+      this.setState({ docs: docs });
+      this.updateCurDoc(0);
+    }
+  }, {
+    key: 'makeNewDoc',
+    value: function makeNewDoc(e) {
+      var docs = this.state.docs;
+
+      docs.push({ name: 'Whoaa' });
+      this.setState({ docs: docs });
+      this.updateCurDoc(docs.length - 1);
     }
   }, {
     key: 'render',
@@ -35416,15 +35450,18 @@ var TabBar = function (_React$Component) {
 
       return _react2.default.createElement(
         'ul',
-        { className: 'TabBar', onClick: this.onClick },
-        this.props.docs.map(function (d, i) {
-          return _react2.default.createElement(Tab, { key: i,
+        { className: 'TabBar' },
+        this.state.docs.map(function (d, i) {
+          return _react2.default.createElement(Tab, { key: d.name,
+            num: i,
             name: d.name,
-            className: i == _this2.props.curDoc ? 'selected' : '' });
+            curDoc: _this2.state.curDoc,
+            selectTab: _this2.updateCurDoc.bind(null, i),
+            closeTab: _this2.closeDoc.bind(null, i) });
         }),
         _react2.default.createElement(
           'li',
-          { className: 'TabBar-add' },
+          { className: 'TabBar-add', onClick: this.makeNewDoc },
           '+'
         )
       );
