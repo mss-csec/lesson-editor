@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 
 import Editor from 'components/editor';
 import Preview from 'components/preview';
+import TabBar from 'components/tabbar';
 
 class MainApp extends React.Component {
   constructor(props) {
@@ -17,7 +18,11 @@ class MainApp extends React.Component {
 
     state.loadedDocs = [
       {
-        name: '',
+        name: 'Whoa',
+        src: `Welcome!`
+      },
+      {
+        name: 'Whoa',
         src: `Welcome!`
       }
     ];
@@ -96,15 +101,14 @@ class MainApp extends React.Component {
   }
 
   render() {
-    const { name, src, history } = this.state.docs[this.state.curDoc];
+    const doc = this.state.docs[this.state.curDoc];
 
     return <main>
       <div id='editor-area'>
-        <Editor name={name}
-          src={src}
-          history={history}
-          updateState={this.updateState}
-          changeState={this.changeState} />
+        <TabBar docs={this.state.docs} curDoc={this.state.curDoc} />
+        <Editor updateState={this.updateState}
+          changeState={this.changeState}
+          {...doc} />
       </div>
       <div id='handlebar'></div>
       <div id='preview-area'>
