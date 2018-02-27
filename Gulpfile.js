@@ -18,7 +18,7 @@ gulp.task('build:css', () => {
 gulp.task('build', gulp.parallel('build:js', 'build:css'));
 
 gulp.task('watch', gulp.series('build', function watchInside() {
-  gulp.watch('app/*.js', gulp.series('build:js'));
+  gulp.watch([ 'app/*.js', 'app/**/*.jsx' ], gulp.series('build:js'));
   gulp.watch('app/*.css', gulp.series('build:css'));
 }));
 

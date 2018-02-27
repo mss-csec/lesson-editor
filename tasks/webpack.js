@@ -36,6 +36,15 @@ const config = {
     ]
   },
 
+  resolve: {
+    modules: [
+      'node_modules',
+      resolvePath('app/')
+    ],
+
+    extensions: [ '.js', '.jsx' ]
+  },
+
   devtool: 'source-map',
 
   target: 'web',
