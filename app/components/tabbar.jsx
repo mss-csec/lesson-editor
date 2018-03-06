@@ -15,38 +15,40 @@ export default class TabBar extends React.Component {
     super(props);
 
     this.state = {
-      docs: props.docs,
-      curDoc: props.curDoc
+      docs: props.docs
     };
 
-    this.updateCurDoc = this.updateCurDoc.bind(this);
     this.closeDoc = this.closeDoc.bind(this);
     this.makeNewDoc = this.makeNewDoc.bind(this);
   }
 
-  updateCurDoc(i, e) {
-    this.setState({ curDoc: i });
-    this.props.changeCurDoc(i);
-  }
-
-  closeDoc(i, e) {
+  closeDoc(d, e) {
     let { docs } = this.state;
 
-    docs.splice(i, 1);
+    e.stopPropagation();
+
+    docs.splice(docs.indexOf(d), 1);
 
     this.setState({ docs });
-    this.updateCurDoc(Object.keys(docs).slice(-1)[0]);
+    this.props.changeCurDoc(docs.slice(-1)[0]);
   }
 
   makeNewDoc(e) {
     let { docs } = this.state, name = prompt('Enter new name');
 
-    if (!docs.filter(d => d == name).length && name) {
+    if (!name) {
+      // cancel
+      return;
+    } else if (~this.props.docs.indexOf(name)) {
+      // switching to a prevosly existing doc
+      docs.push(name);
+      this.setState({ docs });
+      this.props.changeCurDoc(name);
+    } else if (!~docs.indexOf(name)) {
+      // creating a new doc entirely
       docs.push(name);
       this.setState({ docs });
       this.props.makeNewDoc(name);
-    } else {
-      alert('bad name');
     }
   }
 
@@ -56,8 +58,8 @@ export default class TabBar extends React.Component {
     for (let d of this.state.docs) {
       children.push(<Tab key={d}
         name={d}
-        curDoc={this.state.curDoc}
-        selectTab={this.updateCurDoc.bind(null, d)}
+        curDoc={this.props.curDoc}
+        selectTab={this.props.changeCurDoc.bind(null, d)}
         closeTab={this.closeDoc.bind(null, d)} />);
     }
 

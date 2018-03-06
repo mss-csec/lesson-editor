@@ -35452,32 +35452,26 @@ var TabBar = function (_React$Component) {
     var _this = _possibleConstructorReturn(this, (TabBar.__proto__ || Object.getPrototypeOf(TabBar)).call(this, props));
 
     _this.state = {
-      docs: props.docs,
-      curDoc: props.curDoc
+      docs: props.docs
     };
 
-    _this.updateCurDoc = _this.updateCurDoc.bind(_this);
     _this.closeDoc = _this.closeDoc.bind(_this);
     _this.makeNewDoc = _this.makeNewDoc.bind(_this);
     return _this;
   }
 
   _createClass(TabBar, [{
-    key: 'updateCurDoc',
-    value: function updateCurDoc(i, e) {
-      this.setState({ curDoc: i });
-      this.props.changeCurDoc(i);
-    }
-  }, {
     key: 'closeDoc',
-    value: function closeDoc(i, e) {
+    value: function closeDoc(d, e) {
       var docs = this.state.docs;
 
 
-      docs.splice(i, 1);
+      e.stopPropagation();
+
+      docs.splice(docs.indexOf(d), 1);
 
       this.setState({ docs: docs });
-      this.updateCurDoc(Object.keys(docs).slice(-1)[0]);
+      this.props.changeCurDoc(docs.slice(-1)[0]);
     }
   }, {
     key: 'makeNewDoc',
@@ -35485,14 +35479,19 @@ var TabBar = function (_React$Component) {
       var docs = this.state.docs,
           name = prompt('Enter new name');
 
-      if (!docs.filter(function (d) {
-        return d == name;
-      }).length && name) {
+      if (!name) {
+        // cancel
+        return;
+      } else if (~this.props.docs.indexOf(name)) {
+        // switching to a prevosly existing doc
+        docs.push(name);
+        this.setState({ docs: docs });
+        this.props.changeCurDoc(name);
+      } else if (!~docs.indexOf(name)) {
+        // creating a new doc entirely
         docs.push(name);
         this.setState({ docs: docs });
         this.props.makeNewDoc(name);
-      } else {
-        alert('bad name');
       }
     }
   }, {
@@ -35510,8 +35509,8 @@ var TabBar = function (_React$Component) {
 
           children.push(_react2.default.createElement(Tab, { key: d,
             name: d,
-            curDoc: this.state.curDoc,
-            selectTab: this.updateCurDoc.bind(null, d),
+            curDoc: this.props.curDoc,
+            selectTab: this.props.changeCurDoc.bind(null, d),
             closeTab: this.closeDoc.bind(null, d) }));
         }
       } catch (err) {
