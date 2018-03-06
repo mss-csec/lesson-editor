@@ -1345,24 +1345,28 @@ var MainApp = function (_React$Component) {
 
       return _react2.default.createElement(
         'main',
-        null,
+        { className: 'flex-column' },
+        _react2.default.createElement(_tabbar2.default, { docs: Object.keys(this.state.docs),
+          curDoc: this.state.curDoc,
+          changeCurDoc: this.changeCurDoc,
+          makeNewDoc: this.makeNewDoc }),
         _react2.default.createElement(
           'div',
-          { id: 'editor-area' },
-          _react2.default.createElement(_tabbar2.default, { docs: Object.keys(this.state.docs),
-            curDoc: this.state.curDoc,
-            changeCurDoc: this.changeCurDoc,
-            makeNewDoc: this.makeNewDoc }),
-          _react2.default.createElement(_editor2.default, _extends({ updateState: this.updateState,
-            changeState: this.changeState,
-            name: this.state.curDoc
-          }, doc))
-        ),
-        _react2.default.createElement('div', { id: 'handlebar' }),
-        _react2.default.createElement(
-          'div',
-          { id: 'preview-area' },
-          _react2.default.createElement(_preview2.default, { html: this.convertReact() })
+          { className: 'flex-row' },
+          _react2.default.createElement(
+            'div',
+            { id: 'editor-area' },
+            _react2.default.createElement(_editor2.default, _extends({ updateState: this.updateState,
+              changeState: this.changeState,
+              name: this.state.curDoc
+            }, doc))
+          ),
+          _react2.default.createElement('div', { id: 'handlebar' }),
+          _react2.default.createElement(
+            'div',
+            { id: 'preview-area' },
+            _react2.default.createElement(_preview2.default, { html: this.convertReact() })
+          )
         )
       );
     }
@@ -35531,7 +35535,7 @@ var TabBar = function (_React$Component) {
         children,
         _react2.default.createElement(
           'li',
-          { className: 'TabBar-add', onClick: this.makeNewDoc },
+          { className: 'TabBar-tab TabBar-add', onClick: this.makeNewDoc },
           '+'
         )
       );

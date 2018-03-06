@@ -63,7 +63,7 @@ export default class TabBar extends React.Component {
 
     return <ul className="TabBar">
       {children}
-      <li className="TabBar-add" onClick={this.makeNewDoc}>+</li>
+      <li className="TabBar-tab TabBar-add" onClick={this.makeNewDoc}>+</li>
     </ul>;
   }
 }

@@ -28,9 +28,42 @@ body.dark-theme {
   --bg-tertiary: darken($bg-secondary, 3%);
 }
 
-main {
+.flex-row {
   display: flex;
   flex-direction: row;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.TabBar {
+  display: flex;
+  list-style: none;
+  border-bottom: 1px solid #ccc;
+  margin: 0;
+}
+
+.TabBar-tab {
+  padding: 0 10px 2px;
+  border-top: 2px solid #fff;
+  border-right: 1px solid #ccc;
+  margin-bottom: 0;
+  cursor: default;
+}
+
+.TabBar-tab:hover {
+  border-top-color: #ccc;
+}
+
+.TabBar-tab__selected,
+.TabBar-tab__selected:hover {
+  border-top-color: #f52f2f;
+}
+
+.TabBar-add {
+  border-right: 0;
 }
 
 #editor-area,

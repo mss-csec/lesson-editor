@@ -116,20 +116,22 @@ class MainApp extends React.Component {
   render() {
     const doc = this.state.docs[this.state.curDoc];
 
-    return <main>
-      <div id='editor-area'>
-        <TabBar docs={Object.keys(this.state.docs)}
-          curDoc={this.state.curDoc}
-          changeCurDoc={this.changeCurDoc}
-          makeNewDoc={this.makeNewDoc} />
-        <Editor updateState={this.updateState}
-          changeState={this.changeState}
-          name={this.state.curDoc}
-          {...doc} />
-      </div>
-      <div id='handlebar'></div>
-      <div id='preview-area'>
-        <Preview html={this.convertReact()} />
+    return <main className="flex-column">
+      <TabBar docs={Object.keys(this.state.docs)}
+        curDoc={this.state.curDoc}
+        changeCurDoc={this.changeCurDoc}
+        makeNewDoc={this.makeNewDoc} />
+      <div className="flex-row">
+        <div id='editor-area'>
+          <Editor updateState={this.updateState}
+            changeState={this.changeState}
+            name={this.state.curDoc}
+            {...doc} />
+        </div>
+        <div id='handlebar'></div>
+        <div id='preview-area'>
+          <Preview html={this.convertReact()} />
+        </div>
       </div>
     </main>;
   }
