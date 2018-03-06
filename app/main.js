@@ -10,7 +10,7 @@ class MainApp extends React.Component {
     super(props);
 
     let state = {
-      docs: [],
+      docs: {},
       tabsList: [],
       curDoc: 0,
       curSrc: ''
@@ -18,27 +18,28 @@ class MainApp extends React.Component {
 
     state.loadedDocs = [
       {
-        name: 'Whoa',
+        name: ['Whoa'],
         src: `Welcome!`
       },
       {
-        name: 'Whoa',
-        src: `Welcome!`
+        name: ['Whoa2'],
+        src: `Welcome! 2`
       }
     ];
 
-    state.docs = state.loadedDocs.map(({ name, src }) => ({
-      history: {},
-      name,
-      src
-    }));
+    for (let { name, src } of state.loadedDocs) {
+      state.docs[name.join('/')] = { src, history: {} };
+    }
 
+    state.curDoc = state.loadedDocs[0].name.join('/');
     state.curSrc = state.docs[state.curDoc].src;
 
     this.state = state;
 
     this.updateState = this.updateState.bind(this);
     this.changeState = this.changeState.bind(this);
+    this.changeCurDoc = this.changeCurDoc.bind(this);
+    this.makeNewDoc = this.makeNewDoc.bind(this);
 
     // Converters
 
@@ -70,12 +71,8 @@ class MainApp extends React.Component {
     this.setState({ curSrc: text });
   }
 
-  changeState(text, history) {
-    let docs = this.state.docs;
-
-    docs[this.state.curDoc] = { history, text };
-
-    this.setState({ docs });
+  changeState(name, src, history) {
+    this.updateDocs(name, { history, src });
   }
 
   convert(src) {
@@ -86,18 +83,34 @@ class MainApp extends React.Component {
     return { __html: this.convert(this.state.curSrc) };
   }
 
-  updateDocs(doc) {
+  updateDocs(name, doc) {
     let docs = this.state.docs; //
 
-    docs.map((d) => {
-      if (d.name === doc.name) {
-        return doc;
-      } else {
-        return d;
-      }
-    });
+    for (let i in doc) {
+      if (!docs[name].hasOwnProperty(i) || doc[i] !== docs[name][i])
+        docs[name][i] = doc[i];
+    }
 
     this.setState({ docs });
+  }
+
+  changeCurDoc(doc) {
+    this.setState({
+      curDoc: doc,
+      curSrc: this.state.docs[doc].src
+    });
+  }
+
+  makeNewDoc(name) {
+    let docs = this.state.docs;
+
+    docs[name] = {
+      src: '',
+      history: {}
+    };
+
+    this.setState({ docs });
+    this.changeCurDoc(name);
   }
 
   render() {
@@ -105,9 +118,13 @@ class MainApp extends React.Component {
 
     return <main>
       <div id='editor-area'>
-        <TabBar docs={this.state.docs} curDoc={this.state.curDoc} />
+        <TabBar docs={Object.keys(this.state.docs)}
+          curDoc={this.state.curDoc}
+          changeCurDoc={this.changeCurDoc}
+          makeNewDoc={this.makeNewDoc} />
         <Editor updateState={this.updateState}
           changeState={this.changeState}
+          name={this.state.curDoc}
           {...doc} />
       </div>
       <div id='handlebar'></div>

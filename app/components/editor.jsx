@@ -22,17 +22,18 @@ export default class Editor extends React.Component {
     let cm = this.refs.editor.getCodeMirror();
 
     // Save current state
-    this.props.changeState(cm.getValue(), cm.getHistory());
+    this.props.changeState(this.props.name, cm.getValue(), cm.getHistory());
 
     if (Object.keys(nextProps.history).length) {
       cm.setHistory(nextProps.history);
     }
+    cm.setValue(nextProps.src); // really wish we didn't have to
   }
 
   componentWillUnmount() {
     let cm = this.refs.editor.getCodeMirror();
 
-    this.props.changeState(cm.getValue(), cm.getHistory());
+    this.props.changeState(this.props.name, cm.getValue(), cm.getHistory());
   }
 
   updateCode(newCode) {

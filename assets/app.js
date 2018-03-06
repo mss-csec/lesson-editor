@@ -1205,36 +1205,56 @@ var MainApp = function (_React$Component) {
     var _this = _possibleConstructorReturn(this, (MainApp.__proto__ || Object.getPrototypeOf(MainApp)).call(this, props));
 
     var state = {
-      docs: [],
+      docs: {},
       tabsList: [],
       curDoc: 0,
       curSrc: ''
     };
 
     state.loadedDocs = [{
-      name: 'Whoa',
+      name: ['Whoa'],
       src: 'Welcome!'
     }, {
-      name: 'Whoa',
-      src: 'Welcome!'
+      name: ['Whoa2'],
+      src: 'Welcome! 2'
     }];
 
-    state.docs = state.loadedDocs.map(function (_ref) {
-      var name = _ref.name,
-          src = _ref.src;
-      return {
-        history: {},
-        name: name,
-        src: src
-      };
-    });
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
 
+    try {
+      for (var _iterator = state.loadedDocs[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        var _ref = _step.value;
+        var name = _ref.name;
+        var src = _ref.src;
+
+        state.docs[name.join('/')] = { src: src, history: {} };
+      }
+    } catch (err) {
+      _didIteratorError = true;
+      _iteratorError = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion && _iterator.return) {
+          _iterator.return();
+        }
+      } finally {
+        if (_didIteratorError) {
+          throw _iteratorError;
+        }
+      }
+    }
+
+    state.curDoc = state.loadedDocs[0].name.join('/');
     state.curSrc = state.docs[state.curDoc].src;
 
     _this.state = state;
 
     _this.updateState = _this.updateState.bind(_this);
     _this.changeState = _this.changeState.bind(_this);
+    _this.changeCurDoc = _this.changeCurDoc.bind(_this);
+    _this.makeNewDoc = _this.makeNewDoc.bind(_this);
 
     // Converters
 
@@ -1273,12 +1293,8 @@ var MainApp = function (_React$Component) {
     }
   }, {
     key: 'changeState',
-    value: function changeState(text, history) {
-      var docs = this.state.docs;
-
-      docs[this.state.curDoc] = { history: history, text: text };
-
-      this.setState({ docs: docs });
+    value: function changeState(name, src, history) {
+      this.updateDocs(name, { history: history, src: src });
     }
   }, {
     key: 'convert',
@@ -1292,18 +1308,35 @@ var MainApp = function (_React$Component) {
     }
   }, {
     key: 'updateDocs',
-    value: function updateDocs(doc) {
+    value: function updateDocs(name, doc) {
       var docs = this.state.docs; //
 
-      docs.map(function (d) {
-        if (d.name === doc.name) {
-          return doc;
-        } else {
-          return d;
-        }
-      });
+      for (var i in doc) {
+        if (!docs[name].hasOwnProperty(i) || doc[i] !== docs[name][i]) docs[name][i] = doc[i];
+      }
 
       this.setState({ docs: docs });
+    }
+  }, {
+    key: 'changeCurDoc',
+    value: function changeCurDoc(doc) {
+      this.setState({
+        curDoc: doc,
+        curSrc: this.state.docs[doc].src
+      });
+    }
+  }, {
+    key: 'makeNewDoc',
+    value: function makeNewDoc(name) {
+      var docs = this.state.docs;
+
+      docs[name] = {
+        src: '',
+        history: {}
+      };
+
+      this.setState({ docs: docs });
+      this.changeCurDoc(name);
     }
   }, {
     key: 'render',
@@ -1316,9 +1349,13 @@ var MainApp = function (_React$Component) {
         _react2.default.createElement(
           'div',
           { id: 'editor-area' },
-          _react2.default.createElement(_tabbar2.default, { docs: this.state.docs, curDoc: this.state.curDoc }),
+          _react2.default.createElement(_tabbar2.default, { docs: Object.keys(this.state.docs),
+            curDoc: this.state.curDoc,
+            changeCurDoc: this.changeCurDoc,
+            makeNewDoc: this.makeNewDoc }),
           _react2.default.createElement(_editor2.default, _extends({ updateState: this.updateState,
-            changeState: this.changeState
+            changeState: this.changeState,
+            name: this.state.curDoc
           }, doc))
         ),
         _react2.default.createElement('div', { id: 'handlebar' }),
@@ -22132,18 +22169,19 @@ var Editor = function (_React$Component) {
       var cm = this.refs.editor.getCodeMirror();
 
       // Save current state
-      this.props.changeState(cm.getValue(), cm.getHistory());
+      this.props.changeState(this.props.name, cm.getValue(), cm.getHistory());
 
       if (Object.keys(nextProps.history).length) {
         cm.setHistory(nextProps.history);
       }
+      cm.setValue(nextProps.src); // really wish we didn't have to
     }
   }, {
     key: 'componentWillUnmount',
     value: function componentWillUnmount() {
       var cm = this.refs.editor.getCodeMirror();
 
-      this.props.changeState(cm.getValue(), cm.getHistory());
+      this.props.changeState(this.props.name, cm.getValue(), cm.getHistory());
     }
   }, {
     key: 'updateCode',
@@ -35374,6 +35412,10 @@ var _react = __webpack_require__(1);
 
 var _react2 = _interopRequireDefault(_react);
 
+var _closebtn = __webpack_require__(47);
+
+var _closebtn2 = _interopRequireDefault(_closebtn);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -35385,7 +35427,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 function Tab(props) {
   var classes = ['TabBar-tab'];
 
-  if (props.num == props.curDoc) classes.push('TabBar-tab__selected');
+  if (props.name == props.curDoc) classes.push('TabBar-tab__selected');
 
   return _react2.default.createElement(
     'li',
@@ -35393,11 +35435,7 @@ function Tab(props) {
       onClick: props.selectTab },
     props.name,
     ' ',
-    _react2.default.createElement(
-      'a',
-      { onClick: props.closeTab },
-      '\xD7'
-    )
+    _react2.default.createElement(_closebtn2.default, { onClick: props.closeTab })
   );
 }
 
@@ -35407,10 +35445,12 @@ var TabBar = function (_React$Component) {
   function TabBar(props) {
     _classCallCheck(this, TabBar);
 
-    // tEMP
     var _this = _possibleConstructorReturn(this, (TabBar.__proto__ || Object.getPrototypeOf(TabBar)).call(this, props));
 
-    _this.state = { docs: props.docs, curDoc: props.curDoc };
+    _this.state = {
+      docs: props.docs,
+      curDoc: props.curDoc
+    };
 
     _this.updateCurDoc = _this.updateCurDoc.bind(_this);
     _this.closeDoc = _this.closeDoc.bind(_this);
@@ -35422,6 +35462,7 @@ var TabBar = function (_React$Component) {
     key: 'updateCurDoc',
     value: function updateCurDoc(i, e) {
       this.setState({ curDoc: i });
+      this.props.changeCurDoc(i);
     }
   }, {
     key: 'closeDoc',
@@ -35432,33 +35473,62 @@ var TabBar = function (_React$Component) {
       docs.splice(i, 1);
 
       this.setState({ docs: docs });
-      this.updateCurDoc(0);
+      this.updateCurDoc(Object.keys(docs).slice(-1)[0]);
     }
   }, {
     key: 'makeNewDoc',
     value: function makeNewDoc(e) {
-      var docs = this.state.docs;
+      var docs = this.state.docs,
+          name = prompt('Enter new name');
 
-      docs.push({ name: 'Whoaa' });
-      this.setState({ docs: docs });
-      this.updateCurDoc(docs.length - 1);
+      if (!docs.filter(function (d) {
+        return d == name;
+      }).length && name) {
+        docs.push(name);
+        this.setState({ docs: docs });
+        this.props.makeNewDoc(name);
+      } else {
+        alert('bad name');
+      }
     }
   }, {
     key: 'render',
     value: function render() {
-      var _this2 = this;
+      var children = [];
+
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = this.state.docs[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var d = _step.value;
+
+          children.push(_react2.default.createElement(Tab, { key: d,
+            name: d,
+            curDoc: this.state.curDoc,
+            selectTab: this.updateCurDoc.bind(null, d),
+            closeTab: this.closeDoc.bind(null, d) }));
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
 
       return _react2.default.createElement(
         'ul',
         { className: 'TabBar' },
-        this.state.docs.map(function (d, i) {
-          return _react2.default.createElement(Tab, { key: d.name,
-            num: i,
-            name: d.name,
-            curDoc: _this2.state.curDoc,
-            selectTab: _this2.updateCurDoc.bind(null, i),
-            closeTab: _this2.closeDoc.bind(null, i) });
-        }),
+        children,
         _react2.default.createElement(
           'li',
           { className: 'TabBar-add', onClick: this.makeNewDoc },
@@ -35472,6 +35542,32 @@ var TabBar = function (_React$Component) {
 }(_react2.default.Component);
 
 exports.default = TabBar;
+
+/***/ }),
+/* 47 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = CloseBtn;
+
+var _react = __webpack_require__(1);
+
+var _react2 = _interopRequireDefault(_react);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function CloseBtn(props) {
+  return _react2.default.createElement(
+    'a',
+    { onClick: props.onClick },
+    '\xD7'
+  );
+}
 
 /***/ })
 /******/ ]);
