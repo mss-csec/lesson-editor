@@ -8,13 +8,6 @@ export default class Editor extends React.Component {
     this.updateCode = this.updateCode.bind(this);
   }
 
-  componentDidMount() {
-    let cm = this.refs.editor.getCodeMirror();
-
-    if (Object.keys(this.props.history).length)
-      cm.setHistory(this.props.history);
-  }
-
   componentWillReceiveProps(nextProps) {
     // Short-circuit if there is no need to change
     if (this.props.name === nextProps.name) return;
@@ -22,18 +15,17 @@ export default class Editor extends React.Component {
     let cm = this.refs.editor.getCodeMirror();
 
     // Save current state
-    this.props.changeState(this.props.name, cm.getValue(), cm.getHistory());
+    this.props.changeState(this.props.name, cm.getDoc());
 
-    if (Object.keys(nextProps.history).length) {
-      cm.setHistory(nextProps.history);
-    }
-    cm.setValue(nextProps.src); // really wish we didn't have to
+    cm.swapDoc(nextProps.doc); // really wish we didn't have to
+
+    setTimeout(() => { this.refs.editor.focus() }, 100);
   }
 
   componentWillUnmount() {
     let cm = this.refs.editor.getCodeMirror();
 
-    this.props.changeState(this.props.name, cm.getValue(), cm.getHistory());
+    this.props.changeState(this.props.name, cm.getDoc());
   }
 
   updateCode(newCode) {
@@ -45,7 +37,7 @@ export default class Editor extends React.Component {
 
   render() {
     return <CodeMirror ref='editor'
-      value={this.props.src}
+      value={this.props.doc.getValue()}
       onChange={this.updateCode}
       options={{
         lineNumbers: true,

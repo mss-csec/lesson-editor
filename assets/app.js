@@ -1164,8 +1164,6 @@ module.exports = g;
 "use strict";
 
 
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _react = __webpack_require__(1);
@@ -1229,7 +1227,9 @@ var MainApp = function (_React$Component) {
         var name = _ref.name;
         var src = _ref.src;
 
-        state.docs[name.join('/')] = { src: src, history: {} };
+        // asciidoc for now
+        var doc = CodeMirror.Doc(src, 'asciidoc');
+        state.docs[name.join('/')] = doc;
       }
     } catch (err) {
       _didIteratorError = true;
@@ -1247,7 +1247,7 @@ var MainApp = function (_React$Component) {
     }
 
     state.curDoc = state.loadedDocs[0].name.join('/');
-    state.curSrc = state.docs[state.curDoc].src;
+    state.curSrc = state.docs[state.curDoc].getValue();
 
     _this.state = state;
 
@@ -1293,8 +1293,10 @@ var MainApp = function (_React$Component) {
     }
   }, {
     key: 'changeState',
-    value: function changeState(name, src, history) {
-      this.updateDocs(name, { history: history, src: src });
+    value: function changeState(name, doc) {
+      var docs = this.state.docs;
+      docs[name] = doc;
+      this.setState({ docs: docs });
     }
   }, {
     key: 'convert',
@@ -1302,27 +1304,11 @@ var MainApp = function (_React$Component) {
       return this.converters.asciidoc(src);
     }
   }, {
-    key: 'convertReact',
-    value: function convertReact() {
-      return { __html: this.convert(this.state.curSrc) };
-    }
-  }, {
-    key: 'updateDocs',
-    value: function updateDocs(name, doc) {
-      var docs = this.state.docs; //
-
-      for (var i in doc) {
-        if (!docs[name].hasOwnProperty(i) || doc[i] !== docs[name][i]) docs[name][i] = doc[i];
-      }
-
-      this.setState({ docs: docs });
-    }
-  }, {
     key: 'changeCurDoc',
     value: function changeCurDoc(doc) {
       this.setState({
         curDoc: doc,
-        curSrc: this.state.docs[doc].src
+        curSrc: this.state.docs[doc].getValue()
       });
     }
   }, {
@@ -1330,10 +1316,8 @@ var MainApp = function (_React$Component) {
     value: function makeNewDoc(name) {
       var docs = this.state.docs;
 
-      docs[name] = {
-        src: '',
-        history: {}
-      };
+      docs[name] = docs[this.state.curDoc].copy(false);
+      docs[name].setValue('');
 
       this.setState({ docs: docs });
       this.changeCurDoc(name);
@@ -1356,16 +1340,18 @@ var MainApp = function (_React$Component) {
           _react2.default.createElement(
             'div',
             { id: 'editor-area' },
-            _react2.default.createElement(_editor2.default, _extends({ updateState: this.updateState,
+            _react2.default.createElement(_editor2.default, { updateState: this.updateState,
               changeState: this.changeState,
-              name: this.state.curDoc
-            }, doc))
+              name: this.state.curDoc,
+              doc: doc })
           ),
           _react2.default.createElement('div', { id: 'handlebar' }),
           _react2.default.createElement(
             'div',
             { id: 'preview-area' },
-            _react2.default.createElement(_preview2.default, { html: this.convertReact() })
+            _react2.default.createElement(_preview2.default, { html: {
+                __html: this.convert(this.state.curSrc)
+              } })
           )
         )
       );
@@ -22158,34 +22144,30 @@ var Editor = function (_React$Component) {
   }
 
   _createClass(Editor, [{
-    key: 'componentDidMount',
-    value: function componentDidMount() {
-      var cm = this.refs.editor.getCodeMirror();
-
-      if (Object.keys(this.props.history).length) cm.setHistory(this.props.history);
-    }
-  }, {
     key: 'componentWillReceiveProps',
     value: function componentWillReceiveProps(nextProps) {
+      var _this2 = this;
+
       // Short-circuit if there is no need to change
       if (this.props.name === nextProps.name) return;
 
       var cm = this.refs.editor.getCodeMirror();
 
       // Save current state
-      this.props.changeState(this.props.name, cm.getValue(), cm.getHistory());
+      this.props.changeState(this.props.name, cm.getDoc());
 
-      if (Object.keys(nextProps.history).length) {
-        cm.setHistory(nextProps.history);
-      }
-      cm.setValue(nextProps.src); // really wish we didn't have to
+      cm.swapDoc(nextProps.doc); // really wish we didn't have to
+
+      setTimeout(function () {
+        _this2.refs.editor.focus();
+      }, 100);
     }
   }, {
     key: 'componentWillUnmount',
     value: function componentWillUnmount() {
       var cm = this.refs.editor.getCodeMirror();
 
-      this.props.changeState(this.props.name, cm.getValue(), cm.getHistory());
+      this.props.changeState(this.props.name, cm.getDoc());
     }
   }, {
     key: 'updateCode',
@@ -22199,7 +22181,7 @@ var Editor = function (_React$Component) {
     key: 'render',
     value: function render() {
       return _react2.default.createElement(_reactCodemirror2.default, { ref: 'editor',
-        value: this.props.src,
+        value: this.props.doc.getValue(),
         onChange: this.updateCode,
         options: {
           lineNumbers: true,

@@ -28,11 +28,13 @@ class MainApp extends React.Component {
     ];
 
     for (let { name, src } of state.loadedDocs) {
-      state.docs[name.join('/')] = { src, history: {} };
+      // asciidoc for now
+      let doc = CodeMirror.Doc(src, 'asciidoc');
+      state.docs[name.join('/')] = doc;
     }
 
     state.curDoc = state.loadedDocs[0].name.join('/');
-    state.curSrc = state.docs[state.curDoc].src;
+    state.curSrc = state.docs[state.curDoc].getValue();
 
     this.state = state;
 
@@ -71,43 +73,28 @@ class MainApp extends React.Component {
     this.setState({ curSrc: text });
   }
 
-  changeState(name, src, history) {
-    this.updateDocs(name, { history, src });
+  changeState(name, doc) {
+    let docs = this.state.docs;
+    docs[name] = doc;
+    this.setState({ docs });
   }
 
   convert(src) {
     return this.converters.asciidoc(src);
   }
 
-  convertReact() {
-    return { __html: this.convert(this.state.curSrc) };
-  }
-
-  updateDocs(name, doc) {
-    let docs = this.state.docs; //
-
-    for (let i in doc) {
-      if (!docs[name].hasOwnProperty(i) || doc[i] !== docs[name][i])
-        docs[name][i] = doc[i];
-    }
-
-    this.setState({ docs });
-  }
-
   changeCurDoc(doc) {
     this.setState({
       curDoc: doc,
-      curSrc: this.state.docs[doc].src
+      curSrc: this.state.docs[doc].getValue()
     });
   }
 
   makeNewDoc(name) {
     let docs = this.state.docs;
 
-    docs[name] = {
-      src: '',
-      history: {}
-    };
+    docs[name] = docs[this.state.curDoc].copy(false);
+    docs[name].setValue('');
 
     this.setState({ docs });
     this.changeCurDoc(name);
@@ -126,11 +113,13 @@ class MainApp extends React.Component {
           <Editor updateState={this.updateState}
             changeState={this.changeState}
             name={this.state.curDoc}
-            {...doc} />
+            doc={doc} />
         </div>
         <div id='handlebar'></div>
         <div id='preview-area'>
-          <Preview html={this.convertReact()} />
+          <Preview html={{
+            __html: this.convert(this.state.curSrc)
+          }} />
         </div>
       </div>
     </main>;
