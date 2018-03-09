@@ -15,7 +15,7 @@ export default class Editor extends React.Component {
     let cm = this.refs.editor.getCodeMirror();
 
     // Save current state
-    this.props.changeState(this.props.name, cm.getDoc());
+    this.props.changeView(this.props.name, cm.getDoc());
 
     cm.swapDoc(nextProps.doc); // really wish we didn't have to
 
@@ -25,14 +25,14 @@ export default class Editor extends React.Component {
   componentWillUnmount() {
     let cm = this.refs.editor.getCodeMirror();
 
-    this.props.changeState(this.props.name, cm.getDoc());
+    this.props.changeView(this.props.name, cm.getDoc());
   }
 
   updateCode(newCode) {
     const cm = this.refs.editor.getCodeMirror(),
           value = cm.getValue();
 
-    this.props.updateState(value);
+    this.props.updateView(value);
   }
 
   render() {

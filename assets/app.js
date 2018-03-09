@@ -1194,6 +1194,11 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+var welcomeDoc = {
+  name: ['Welcome!'],
+  src: '# Welcome to the MSS CSEC Lesson Editor!'
+};
+
 var MainApp = function (_React$Component) {
   _inherits(MainApp, _React$Component);
 
@@ -1206,15 +1211,13 @@ var MainApp = function (_React$Component) {
       docs: {},
       tabsList: [],
       curDoc: 'Welcome!',
-      curSrc: ''
+      curSrc: '',
+      untitledCounter: 1
     };
 
     var saved = JSON.parse(localStorage.getItem('store') || "{}");
 
-    state.loadedDocs = saved.docs || [{
-      name: ['Welcome!'],
-      src: '# Welcome to the MSS CSEC Lesson Editor!'
-    }];
+    state.loadedDocs = saved.docs || [welcomeDoc];
 
     var _iteratorNormalCompletion = true;
     var _didIteratorError = false;
@@ -1244,13 +1247,19 @@ var MainApp = function (_React$Component) {
       }
     }
 
+    state.tabsList = saved.tabsList || Object.keys(state.docs);
+
     state.curDoc = saved.curDoc || state.loadedDocs[0].name.join('/');
     state.curSrc = state.docs[state.curDoc].getValue();
 
     _this.state = state;
 
-    _this.updateState = _this.updateState.bind(_this);
-    _this.changeState = _this.changeState.bind(_this);
+    // Updating and changing the current editor view
+    _this.updateView = _this.updateView.bind(_this);
+    _this.changeView = _this.changeView.bind(_this);
+
+    // Updating the tabbar
+    _this.closeDoc = _this.closeDoc.bind(_this);
     _this.changeCurDoc = _this.changeCurDoc.bind(_this);
     _this.makeNewDoc = _this.makeNewDoc.bind(_this);
 
@@ -1292,6 +1301,7 @@ var MainApp = function (_React$Component) {
             src: d === state.curDoc ? state.curSrc : state.docs[d].getValue()
           };
         }),
+        tabsList: state.tabsList,
         curDoc: state.curDoc
       }));
     }, false);
@@ -1299,21 +1309,26 @@ var MainApp = function (_React$Component) {
   }
 
   _createClass(MainApp, [{
-    key: 'updateState',
-    value: function updateState(text) {
+    key: 'updateView',
+    value: function updateView(text) {
       this.setState({ curSrc: text });
     }
   }, {
-    key: 'changeState',
-    value: function changeState(name, doc) {
+    key: 'changeView',
+    value: function changeView(name, doc) {
       var docs = this.state.docs;
       docs[name] = doc;
       this.setState({ docs: docs });
     }
   }, {
-    key: 'convert',
-    value: function convert(src) {
-      return this.converters.asciidoc(src);
+    key: 'closeDoc',
+    value: function closeDoc(doc) {
+      var tabsList = this.state.tabsList;
+
+      tabsList.splice(tabsList.indexOf(doc), 1);
+
+      this.setState({ tabsList: tabsList });
+      this.changeCurDoc(tabsList.slice(-1)[0]);
     }
   }, {
     key: 'changeCurDoc',
@@ -1323,16 +1338,35 @@ var MainApp = function (_React$Component) {
         curSrc: this.state.docs[doc].getValue()
       });
     }
+
+    // Creates a new document
+
   }, {
     key: 'makeNewDoc',
-    value: function makeNewDoc(name) {
-      var docs = this.state.docs;
+    value: function makeNewDoc() {
+      var _state = this.state,
+          docs = _state.docs,
+          tabsList = _state.tabsList,
+          name = prompt('Enter new name');
 
-      docs[name] = docs[this.state.curDoc].copy(false);
-      docs[name].setValue('');
 
-      this.setState({ docs: docs });
+      if (!name) {
+        // cancel
+        return;
+      } else if (!~Object.keys(docs).indexOf(name)) {
+        // creating a new doc entirely
+        docs[name] = docs[this.state.curDoc].copy(false);
+        docs[name].setValue('');
+      }
+
+      tabsList.push(name);
+      this.setState({ docs: docs, tabsList: tabsList });
       this.changeCurDoc(name);
+    }
+  }, {
+    key: 'convert',
+    value: function convert(src) {
+      return this.converters.asciidoc(src);
     }
   }, {
     key: 'render',
@@ -1342,8 +1376,9 @@ var MainApp = function (_React$Component) {
       return _react2.default.createElement(
         'main',
         { className: 'flex-column' },
-        _react2.default.createElement(_tabbar2.default, { docs: Object.keys(this.state.docs),
+        _react2.default.createElement(_tabbar2.default, { docs: this.state.tabsList,
           curDoc: this.state.curDoc,
+          closeDoc: this.closeDoc,
           changeCurDoc: this.changeCurDoc,
           makeNewDoc: this.makeNewDoc }),
         _react2.default.createElement(
@@ -1352,8 +1387,8 @@ var MainApp = function (_React$Component) {
           _react2.default.createElement(
             'div',
             { id: 'editor-area' },
-            _react2.default.createElement(_editor2.default, { updateState: this.updateState,
-              changeState: this.changeState,
+            _react2.default.createElement(_editor2.default, { updateView: this.updateView,
+              changeView: this.changeView,
               name: this.state.curDoc,
               doc: doc })
           ),
@@ -22166,7 +22201,7 @@ var Editor = function (_React$Component) {
       var cm = this.refs.editor.getCodeMirror();
 
       // Save current state
-      this.props.changeState(this.props.name, cm.getDoc());
+      this.props.changeView(this.props.name, cm.getDoc());
 
       cm.swapDoc(nextProps.doc); // really wish we didn't have to
 
@@ -22179,7 +22214,7 @@ var Editor = function (_React$Component) {
     value: function componentWillUnmount() {
       var cm = this.refs.editor.getCodeMirror();
 
-      this.props.changeState(this.props.name, cm.getDoc());
+      this.props.changeView(this.props.name, cm.getDoc());
     }
   }, {
     key: 'updateCode',
@@ -22187,7 +22222,7 @@ var Editor = function (_React$Component) {
       var cm = this.refs.editor.getCodeMirror(),
           value = cm.getValue();
 
-      this.props.updateState(value);
+      this.props.updateView(value);
     }
   }, {
     key: 'render',
@@ -35429,10 +35464,8 @@ function Tab(props) {
 
   return _react2.default.createElement(
     'li',
-    { className: classes.join(' '),
-      onClick: props.selectTab },
+    { className: classes.join(' '), onClick: props.selectTab },
     props.name,
-    ' ',
     _react2.default.createElement(_closebtn2.default, { onClick: props.closeTab })
   );
 }
@@ -35445,48 +35478,16 @@ var TabBar = function (_React$Component) {
 
     var _this = _possibleConstructorReturn(this, (TabBar.__proto__ || Object.getPrototypeOf(TabBar)).call(this, props));
 
-    _this.state = {
-      docs: props.docs
-    };
-
     _this.closeDoc = _this.closeDoc.bind(_this);
-    _this.makeNewDoc = _this.makeNewDoc.bind(_this);
     return _this;
   }
 
   _createClass(TabBar, [{
     key: 'closeDoc',
     value: function closeDoc(d, e) {
-      var docs = this.state.docs;
-
-
       e.stopPropagation();
 
-      docs.splice(docs.indexOf(d), 1);
-
-      this.setState({ docs: docs });
-      this.props.changeCurDoc(docs.slice(-1)[0]);
-    }
-  }, {
-    key: 'makeNewDoc',
-    value: function makeNewDoc(e) {
-      var docs = this.state.docs,
-          name = prompt('Enter new name');
-
-      if (!name) {
-        // cancel
-        return;
-      } else if (~this.props.docs.indexOf(name)) {
-        // switching to a prevosly existing doc
-        docs.push(name);
-        this.setState({ docs: docs });
-        this.props.changeCurDoc(name);
-      } else if (!~docs.indexOf(name)) {
-        // creating a new doc entirely
-        docs.push(name);
-        this.setState({ docs: docs });
-        this.props.makeNewDoc(name);
-      }
+      this.props.closeDoc(d);
     }
   }, {
     key: 'render',
@@ -35498,7 +35499,7 @@ var TabBar = function (_React$Component) {
       var _iteratorError = undefined;
 
       try {
-        for (var _iterator = this.state.docs[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        for (var _iterator = this.props.docs[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
           var d = _step.value;
 
           children.push(_react2.default.createElement(Tab, { key: d,
@@ -35528,7 +35529,7 @@ var TabBar = function (_React$Component) {
         children,
         _react2.default.createElement(
           'li',
-          { className: 'TabBar-tab TabBar-add', onClick: this.makeNewDoc },
+          { className: 'TabBar-tab TabBar-add', onClick: this.props.makeNewDoc },
           '+'
         )
       );

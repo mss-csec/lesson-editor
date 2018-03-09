@@ -5,6 +5,11 @@ import Editor from 'components/editor';
 import Preview from 'components/preview';
 import TabBar from 'components/tabbar';
 
+const welcomeDoc = {
+  name: ['Welcome!'],
+  src: `# Welcome to the MSS CSEC Lesson Editor!`
+};
+
 class MainApp extends React.Component {
   constructor(props) {
     super(props);
@@ -13,30 +18,32 @@ class MainApp extends React.Component {
       docs: {},
       tabsList: [],
       curDoc: 'Welcome!',
-      curSrc: ''
+      curSrc: '',
+      untitledCounter: 1
     };
 
     const saved = JSON.parse(localStorage.getItem('store') || "{}");
 
-    state.loadedDocs = saved.docs || [
-      {
-        name: ['Welcome!'],
-        src: `# Welcome to the MSS CSEC Lesson Editor!`
-      }
-    ];
+    state.loadedDocs = saved.docs || [ welcomeDoc ];
 
     for (const { name, src } of state.loadedDocs) {
       // asciidoc for now
       state.docs[name.join('/')] = CodeMirror.Doc(src, 'asciidoc');
     }
 
+    state.tabsList = saved.tabsList || Object.keys(state.docs);
+
     state.curDoc = saved.curDoc || state.loadedDocs[0].name.join('/');
     state.curSrc = state.docs[state.curDoc].getValue();
 
     this.state = state;
 
-    this.updateState = this.updateState.bind(this);
-    this.changeState = this.changeState.bind(this);
+    // Updating and changing the current editor view
+    this.updateView = this.updateView.bind(this);
+    this.changeView = this.changeView.bind(this);
+
+    // Updating the tabbar
+    this.closeDoc = this.closeDoc.bind(this);
     this.changeCurDoc = this.changeCurDoc.bind(this);
     this.makeNewDoc = this.makeNewDoc.bind(this);
 
@@ -73,23 +80,29 @@ class MainApp extends React.Component {
           name: d.split('/'),
           src: d === state.curDoc ? state.curSrc : state.docs[d].getValue()
         })),
+        tabsList: state.tabsList,
         curDoc: state.curDoc
       }));
     }, false);
   }
 
-  updateState(text) {
+  updateView(text) {
     this.setState({ curSrc: text });
   }
 
-  changeState(name, doc) {
+  changeView(name, doc) {
     let docs = this.state.docs;
     docs[name] = doc;
     this.setState({ docs });
   }
 
-  convert(src) {
-    return this.converters.asciidoc(src);
+  closeDoc(doc) {
+    let tabsList = this.state.tabsList;
+
+    tabsList.splice(tabsList.indexOf(doc), 1);
+
+    this.setState({ tabsList });
+    this.changeCurDoc(tabsList.slice(-1)[0]);
   }
 
   changeCurDoc(doc) {
@@ -99,28 +112,42 @@ class MainApp extends React.Component {
     });
   }
 
-  makeNewDoc(name) {
-    let docs = this.state.docs;
+  // Creates a new document
+  makeNewDoc() {
+    let { docs, tabsList } = this.state,
+        name = prompt('Enter new name');
 
-    docs[name] = docs[this.state.curDoc].copy(false);
-    docs[name].setValue('');
+    if (!name) {
+      // cancel
+      return;
+    } else if (!~Object.keys(docs).indexOf(name)) {
+      // creating a new doc entirely
+      docs[name] = docs[this.state.curDoc].copy(false);
+      docs[name].setValue('');
+    }
 
-    this.setState({ docs });
+    tabsList.push(name);
+    this.setState({ docs, tabsList });
     this.changeCurDoc(name);
+  }
+
+  convert(src) {
+    return this.converters.asciidoc(src);
   }
 
   render() {
     const doc = this.state.docs[this.state.curDoc];
 
     return <main className="flex-column">
-      <TabBar docs={Object.keys(this.state.docs)}
+      <TabBar docs={this.state.tabsList}
         curDoc={this.state.curDoc}
+        closeDoc={this.closeDoc}
         changeCurDoc={this.changeCurDoc}
         makeNewDoc={this.makeNewDoc} />
       <div className="flex-row">
         <div id='editor-area'>
-          <Editor updateState={this.updateState}
-            changeState={this.changeState}
+          <Editor updateView={this.updateView}
+            changeView={this.changeView}
             name={this.state.curDoc}
             doc={doc} />
         </div>
