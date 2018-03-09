@@ -1,4 +1,5 @@
 import React from 'react';
+import Renameable from './renameable';
 import CloseBtn from './closebtn';
 
 function Tab(props) {
@@ -7,7 +8,7 @@ function Tab(props) {
   if (props.id == props.curDoc) classes.push('TabBar-tab__selected');
 
   return <li className={classes.join(' ')} onClick={props.selectTab}>
-    {props.name}
+    <Renameable value={props.name} onChange={props.renameDoc} />
     <CloseBtn onClick={props.closeTab} />
   </li>;
 }
@@ -33,6 +34,7 @@ export default class TabBar extends React.Component {
         id={d}
         name={this.props.docNames[d].name}
         curDoc={this.props.curDoc}
+        renameDoc={this.props.renameDoc.bind(null, d)}
         selectTab={this.props.changeCurDoc.bind(null, d)}
         closeTab={this.closeDoc.bind(null, d)} />);
     }

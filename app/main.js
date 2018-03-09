@@ -51,7 +51,10 @@ class MainApp extends React.Component {
     // Updating the tabbar
     this.closeDoc = this.closeDoc.bind(this);
     this.changeCurDoc = this.changeCurDoc.bind(this);
+
+    // Document updating functions
     this.makeNewDoc = this.makeNewDoc.bind(this);
+    this.renameDoc = this.renameDoc.bind(this);
 
     // Converters
 
@@ -145,6 +148,13 @@ class MainApp extends React.Component {
     this.changeCurDoc(id);
   }
 
+  // Rename a given document
+  renameDoc(doc, newName) {
+    let docs = this.state.docs;
+    docs[doc].name = newName;
+    this.setState({ docs });
+  }
+
   convert(src) {
     return this.converters.asciidoc(src);
   }
@@ -158,7 +168,8 @@ class MainApp extends React.Component {
         curDoc={this.state.curDoc}
         closeDoc={this.closeDoc}
         changeCurDoc={this.changeCurDoc}
-        makeNewDoc={this.makeNewDoc} />
+        makeNewDoc={this.makeNewDoc}
+        renameDoc={this.renameDoc} />
       <div className="flex-row">
         <div id='editor-area'>
           <Editor updateView={this.updateView}
