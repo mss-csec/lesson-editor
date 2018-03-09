@@ -4,7 +4,7 @@ import CloseBtn from './closebtn';
 function Tab(props) {
   let classes = ['TabBar-tab'];
 
-  if (props.name == props.curDoc) classes.push('TabBar-tab__selected');
+  if (props.id == props.curDoc) classes.push('TabBar-tab__selected');
 
   return <li className={classes.join(' ')} onClick={props.selectTab}>
     {props.name}
@@ -30,7 +30,8 @@ export default class TabBar extends React.Component {
 
     for (let d of this.props.docs) {
       children.push(<Tab key={d}
-        name={d}
+        id={d}
+        name={this.props.docNames[d].name}
         curDoc={this.props.curDoc}
         selectTab={this.props.changeCurDoc.bind(null, d)}
         closeTab={this.closeDoc.bind(null, d)} />);

@@ -1,3 +1,5 @@
+import nanoid from 'nanoid';
+
 import React from 'react';
 import ReactDOM from 'react-dom';
 
@@ -6,6 +8,7 @@ import Preview from 'components/preview';
 import TabBar from 'components/tabbar';
 
 const welcomeDoc = {
+  id: 'Welcome!',
   name: ['Welcome!'],
   src: `# Welcome to the MSS CSEC Lesson Editor!`
 };
@@ -26,15 +29,18 @@ class MainApp extends React.Component {
 
     state.loadedDocs = saved.docs || [ welcomeDoc ];
 
-    for (const { name, src } of state.loadedDocs) {
+    for (const { id, name, src } of state.loadedDocs) {
       // asciidoc for now
-      state.docs[name.join('/')] = CodeMirror.Doc(src, 'asciidoc');
+      state.docs[id || nanoid()] = {
+        name: name.join('/'),
+        doc: CodeMirror.Doc(src, 'asciidoc')
+      };
     }
 
     state.tabsList = saved.tabsList || Object.keys(state.docs);
 
-    state.curDoc = saved.curDoc || state.loadedDocs[0].name.join('/');
-    state.curSrc = state.docs[state.curDoc].getValue();
+    state.curDoc = saved.curDoc || state.tabsList[state.tabsList.length - 1];
+    state.curSrc = state.docs[state.curDoc].doc.getValue();
 
     this.state = state;
 
@@ -77,8 +83,9 @@ class MainApp extends React.Component {
       const state = this.state;
       localStorage.setItem('store', JSON.stringify({
         docs: Object.keys(state.docs).map(d => ({
-          name: d.split('/'),
-          src: d === state.curDoc ? state.curSrc : state.docs[d].getValue()
+          id: d,
+          name: state.docs[d].name.split('/'),
+          src: d === state.curDoc ? state.curSrc : state.docs[d].doc.getValue()
         })),
         tabsList: state.tabsList,
         curDoc: state.curDoc
@@ -92,7 +99,7 @@ class MainApp extends React.Component {
 
   changeView(name, doc) {
     let docs = this.state.docs;
-    docs[name] = doc;
+    docs[name].doc = doc;
     this.setState({ docs });
   }
 
@@ -108,27 +115,34 @@ class MainApp extends React.Component {
   changeCurDoc(doc) {
     this.setState({
       curDoc: doc,
-      curSrc: this.state.docs[doc].getValue()
+      curSrc: this.state.docs[doc].doc.getValue()
     });
   }
 
   // Creates a new document
   makeNewDoc() {
     let { docs, tabsList } = this.state,
-        name = prompt('Enter new name');
+        name = prompt('Enter new name'),
+        id;
 
     if (!name) {
       // cancel
       return;
-    } else if (!~Object.keys(docs).indexOf(name)) {
+    } else if (id = Object.keys(docs).filter(d => docs[d].name == name)[0]) {
+      // existing doc
+    } else {
       // creating a new doc entirely
-      docs[name] = docs[this.state.curDoc].copy(false);
-      docs[name].setValue('');
+      id = nanoid();
+      docs[id] = {
+        name,
+        doc: docs[this.state.curDoc].doc.copy(false)
+      };
+      docs[id].doc.setValue('');
     }
 
-    tabsList.push(name);
+    tabsList.push(id);
     this.setState({ docs, tabsList });
-    this.changeCurDoc(name);
+    this.changeCurDoc(id);
   }
 
   convert(src) {
@@ -136,10 +150,11 @@ class MainApp extends React.Component {
   }
 
   render() {
-    const doc = this.state.docs[this.state.curDoc];
+    const doc = this.state.docs[this.state.curDoc].doc;
 
     return <main className="flex-column">
       <TabBar docs={this.state.tabsList}
+        docNames={this.state.docs}
         curDoc={this.state.curDoc}
         closeDoc={this.closeDoc}
         changeCurDoc={this.changeCurDoc}
