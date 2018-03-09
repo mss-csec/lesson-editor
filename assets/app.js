@@ -1205,16 +1205,15 @@ var MainApp = function (_React$Component) {
     var state = {
       docs: {},
       tabsList: [],
-      curDoc: 0,
+      curDoc: 'Welcome!',
       curSrc: ''
     };
 
-    state.loadedDocs = [{
-      name: ['Whoa'],
-      src: 'Welcome!'
-    }, {
-      name: ['Whoa2'],
-      src: 'Welcome! 2'
+    var saved = JSON.parse(localStorage.getItem('store') || "{}");
+
+    state.loadedDocs = saved.docs || [{
+      name: ['Welcome!'],
+      src: '# Welcome to the MSS CSEC Lesson Editor!'
     }];
 
     var _iteratorNormalCompletion = true;
@@ -1228,8 +1227,7 @@ var MainApp = function (_React$Component) {
         var src = _ref.src;
 
         // asciidoc for now
-        var doc = CodeMirror.Doc(src, 'asciidoc');
-        state.docs[name.join('/')] = doc;
+        state.docs[name.join('/')] = CodeMirror.Doc(src, 'asciidoc');
       }
     } catch (err) {
       _didIteratorError = true;
@@ -1246,7 +1244,7 @@ var MainApp = function (_React$Component) {
       }
     }
 
-    state.curDoc = state.loadedDocs[0].name.join('/');
+    state.curDoc = saved.curDoc || state.loadedDocs[0].name.join('/');
     state.curSrc = state.docs[state.curDoc].getValue();
 
     _this.state = state;
@@ -1283,6 +1281,20 @@ var MainApp = function (_React$Component) {
         });
       }
     };
+
+    window.addEventListener("beforeunload", function () {
+      // Save the document state on page close/reload
+      var state = _this.state;
+      localStorage.setItem('store', JSON.stringify({
+        docs: Object.keys(state.docs).map(function (d) {
+          return {
+            name: d.split('/'),
+            src: d === state.curDoc ? state.curSrc : state.docs[d].getValue()
+          };
+        }),
+        curDoc: state.curDoc
+      }));
+    }, false);
     return _this;
   }
 

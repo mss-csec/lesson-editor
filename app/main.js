@@ -12,28 +12,25 @@ class MainApp extends React.Component {
     let state = {
       docs: {},
       tabsList: [],
-      curDoc: 0,
+      curDoc: 'Welcome!',
       curSrc: ''
     };
 
-    state.loadedDocs = [
+    const saved = JSON.parse(localStorage.getItem('store') || "{}");
+
+    state.loadedDocs = saved.docs || [
       {
-        name: ['Whoa'],
-        src: `Welcome!`
-      },
-      {
-        name: ['Whoa2'],
-        src: `Welcome! 2`
+        name: ['Welcome!'],
+        src: `# Welcome to the MSS CSEC Lesson Editor!`
       }
     ];
 
-    for (let { name, src } of state.loadedDocs) {
+    for (const { name, src } of state.loadedDocs) {
       // asciidoc for now
-      let doc = CodeMirror.Doc(src, 'asciidoc');
-      state.docs[name.join('/')] = doc;
+      state.docs[name.join('/')] = CodeMirror.Doc(src, 'asciidoc');
     }
 
-    state.curDoc = state.loadedDocs[0].name.join('/');
+    state.curDoc = saved.curDoc || state.loadedDocs[0].name.join('/');
     state.curSrc = state.docs[state.curDoc].getValue();
 
     this.state = state;
@@ -67,6 +64,18 @@ class MainApp extends React.Component {
         });
       }
     };
+
+    window.addEventListener("beforeunload", () => {
+    // Save the document state on page close/reload
+      const state = this.state;
+      localStorage.setItem('store', JSON.stringify({
+        docs: Object.keys(state.docs).map(d => ({
+          name: d.split('/'),
+          src: d === state.curDoc ? state.curSrc : state.docs[d].getValue()
+        })),
+        curDoc: state.curDoc
+      }));
+    }, false);
   }
 
   updateState(text) {
