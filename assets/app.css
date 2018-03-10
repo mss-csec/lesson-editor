@@ -3,16 +3,33 @@ body {
 }
 
 .flex-row {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
   display: flex;
-  flex-direction: row;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+  -webkit-flex-direction: row;
+      -ms-flex-direction: row;
+          flex-direction: row;
 }
 
 .flex-column {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
   display: flex;
-  flex-direction: column;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -webkit-flex-direction: column;
+      -ms-flex-direction: column;
+          flex-direction: column;
 }
 
 .TabBar {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
   display: flex;
   border-bottom: 1px solid #ccc;
   margin: 0;
@@ -26,7 +43,10 @@ body {
   border-right: 1px solid #ccc;
   margin-bottom: 0;
   cursor: default;
-  user-select: none;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
 }
 
 .TabBar-tab:hover {
@@ -51,15 +71,22 @@ body {
 
 #editor-area,
 #preview-area {
-  box-sizing: border-box;
-  flex: 1;
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+  -webkit-box-flex: 1;
+  -webkit-flex: 1;
+      -ms-flex: 1;
+          flex: 1;
   min-height: 100vh;
   max-height: 100vh;
   overflow: hidden;
 }
 #handlebar {
   background-color: #777;
-  flex: auto;
+  -webkit-box-flex: 1;
+  -webkit-flex: auto;
+      -ms-flex: auto;
+          flex: auto;
   max-width: 5px;
 }
 #actions {
@@ -113,6 +140,7 @@ body {
 }
 
 #messages {
+  position: -webkit-sticky;
   position: sticky;
   top: 0;
   color: #232323;
