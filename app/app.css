@@ -31,11 +31,18 @@ body.dark-theme {
 .flex-row {
   display: flex;
   flex-direction: row;
+  flex-grow: 1;
 }
 
 .flex-column {
   display: flex;
+  width: 0;
   flex-direction: column;
+  flex-grow: 1;
+}
+
+.Sidebar {
+  flex: 0 0 500px;
 }
 
 .TabBar {
@@ -45,14 +52,23 @@ body.dark-theme {
 }
 
 .TabBar-tab {
+  display: flex;
+  flex: 1;
   background-color: var(--bg-primary);
   list-style: none;
   padding: 0 10px 2px;
   border-top: 2px solid var(--bg-primary);
   border-right: 1px solid #ccc;
   margin-bottom: 0;
+  overflow: hidden;
   cursor: default;
   user-select: none;
+}
+
+.TabBar-tab span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .TabBar-tab:hover {
@@ -64,11 +80,16 @@ body.dark-theme {
   border-top-color: var(--brand-colour);
 }
 
+.TabBar-tab__temp {
+  font-style: italic;
+}
+
 .TabBar .CloseBtn {
-  margin-left: 10px;
+  margin-left: auto;
 }
 
 .TabBar-add {
+  flex: 0 0 10px;
   border-right: 0;
 }
 

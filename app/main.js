@@ -5,12 +5,14 @@ import ReactDOM from 'react-dom';
 
 import Editor from 'components/editor';
 import Preview from 'components/preview';
+import Sidebar from 'components/sidebar';
 import TabBar from 'components/tabbar';
 
 const welcomeDoc = {
   id: 'Welcome!',
   name: ['Welcome!'],
-  src: `# Welcome to the MSS CSEC Lesson Editor!`
+  src: `# Welcome to the MSS CSEC Lesson Editor!`,
+  temp: true
 };
 
 class MainApp extends React.Component {
@@ -21,28 +23,25 @@ class MainApp extends React.Component {
       docs: {},
       tabsList: [],
       curDoc: 'Welcome!',
-      curSrc: '',
-      untitledCounter: 1
+      curSrc: ''
     };
 
     const saved = JSON.parse(localStorage.getItem('store') || "{}");
 
     state.loadedDocs = saved.docs || [ welcomeDoc ];
 
-    for (const { id, name, src } of state.loadedDocs) {
+    for (const { id, name, src, temp } of state.loadedDocs) {
       // asciidoc for now
       state.docs[id || nanoid()] = {
         name: name.join('/'),
-        doc: CodeMirror.Doc(src, 'asciidoc')
+        doc: CodeMirror.Doc(src, 'asciidoc'),
+        temp
       };
     }
 
-    state.tabsList = saved.tabsList || Object.keys(state.docs).map(id => ({
-      id,
-      name: state.docs[id].name
-    }));
+    state.tabsList = saved.tabsList || Object.keys(state.docs);
 
-    state.curDoc = saved.curDoc || state.tabsList[state.tabsList.length - 1].id;
+    state.curDoc = saved.curDoc || state.tabsList[state.tabsList.length - 1];
     state.curSrc = state.docs[state.curDoc].doc.getValue();
 
     this.state = state;
@@ -59,6 +58,7 @@ class MainApp extends React.Component {
     // Document updating functions
     this.makeNewDoc = this.makeNewDoc.bind(this);
     this.renameDoc = this.renameDoc.bind(this);
+    this.deleteDoc = this.deleteDoc.bind(this);
 
     // Converters
 
@@ -92,7 +92,8 @@ class MainApp extends React.Component {
         docs: Object.keys(state.docs).map(d => ({
           id: d,
           name: state.docs[d].name.split('/'),
-          src: d === state.curDoc ? state.curSrc : state.docs[d].doc.getValue()
+          src: d === state.curDoc ? state.curSrc : state.docs[d].doc.getValue(),
+          temp: state.docs[d].temp
         })),
         tabsList: state.tabsList,
         curDoc: state.curDoc
@@ -101,27 +102,43 @@ class MainApp extends React.Component {
   }
 
   updateView(text) {
+    if (this.state.docs[this.state.curDoc].temp &&
+        this.state.curDoc !== welcomeDoc.id) {
+      let docs = this.state.docs;
+      docs[this.state.curDoc].name = text.split('\n')[0] || 'Untitled';
+    }
     this.setState({ curSrc: text });
   }
 
   changeView(name, doc) {
     let docs = this.state.docs;
-    docs[name].doc = doc;
-    this.setState({ docs });
+
+    // Sometimes, the document isn't defined because it's been deleted
+    // So we only update when it is defined
+    if (docs[name]) {
+      docs[name].doc = doc;
+      this.setState({ docs });
+    }
   }
 
   closeDoc(doc) {
-    let tabsList = this.state.tabsList;
+    let { docs, tabsList } = this.state
 
-    for (let i=0; i<tabsList.length; i++) {
-      if (tabsList[i].id === doc) {
-        tabsList.splice(i, 1);
-        break;
-      }
+    tabsList.splice(tabsList.indexOf(doc), 1);
+
+    // if closeDoc is called from deleteDoc, then docs[doc] might not
+    // exist, hence the check
+    if (docs[doc] && docs[doc].temp) {
+      delete docs[doc];
+      this.setState({ docs });
     }
 
-    this.setState({ tabsList });
-    this.changeCurDoc(tabsList[tabsList.length - 1].id);
+    if (tabsList.length && Object.keys(docs).length) {
+      this.setState({ tabsList });
+      this.changeCurDoc(tabsList[tabsList.length - 1]);
+    } else {
+      this.makeNewDoc();
+    }
   }
 
   changeCurDoc(doc) {
@@ -129,6 +146,12 @@ class MainApp extends React.Component {
       curDoc: doc,
       curSrc: this.state.docs[doc].doc.getValue()
     });
+
+    if (!~this.state.tabsList.indexOf(doc)) {
+      let tabsList = this.state.tabsList;
+      tabsList.push(doc);
+      this.setState({ tabsList });
+    }
   }
 
   onDragTabEnd({ oldIndex, newIndex }) {
@@ -141,27 +164,29 @@ class MainApp extends React.Component {
   }
 
   // Creates a new document
-  makeNewDoc() {
+  makeNewDoc(givenName) {
     let { docs, tabsList } = this.state,
-        name = prompt('Enter new name'),
+        name = givenName || 'Untitled',
         id;
+
 
     if (!name) {
       // cancel
       return;
-    } else if (id = Object.keys(docs).filter(d => docs[d].name == name)[0]) {
+    } else if (givenName &&
+        (id = Object.keys(docs).filter(d => docs[d].name == name)[0])) {
       // existing doc
     } else {
       // creating a new doc entirely
       id = nanoid();
       docs[id] = {
         name,
-        doc: docs[this.state.curDoc].doc.copy(false)
+        doc: CodeMirror.Doc('', 'asciidoc'),
+        temp: !givenName // if givenName is empty, then this is true
       };
-      docs[id].doc.setValue('');
     }
 
-    tabsList.push({ id, name });
+    tabsList.push(id);
     this.setState({ docs, tabsList });
     this.changeCurDoc(id);
   }
@@ -170,6 +195,19 @@ class MainApp extends React.Component {
   renameDoc(doc, newName) {
     let docs = this.state.docs;
     docs[doc].name = newName;
+    docs[doc].temp = false; // rename is equivalent to save
+    this.setState({ docs });
+  }
+
+  // Deletes a given document
+  deleteDoc(doc) {
+    let { docs, tabsList } = this.state;
+    delete docs[doc];
+
+    if (~tabsList.indexOf(doc)) {
+      this.closeDoc(doc);
+    }
+
     this.setState({ docs });
   }
 
@@ -180,30 +218,37 @@ class MainApp extends React.Component {
   render() {
     const doc = this.state.docs[this.state.curDoc].doc;
 
-    return <main className="flex-column">
-      <TabBar docs={this.state.tabsList}
-        docNames={this.state.docs}
+    return <div className="flex-row">
+      <Sidebar docs={this.state.docs}
         curDoc={this.state.curDoc}
-        closeDoc={this.closeDoc}
-        changeCurDoc={this.changeCurDoc}
-        onDragTabEnd={this.onDragTabEnd}
-        makeNewDoc={this.makeNewDoc}
-        renameDoc={this.renameDoc} />
-      <div className="flex-row">
-        <div id='editor-area'>
-          <Editor updateView={this.updateView}
-            changeView={this.changeView}
-            name={this.state.curDoc}
-            doc={doc} />
-        </div>
-        <div id='handlebar'></div>
-        <div id='preview-area'>
-          <Preview html={{
-            __html: this.convert(this.state.curSrc)
-          }} />
+        deleteItem={this.deleteDoc}
+        selectItem={this.changeCurDoc}
+        renameItem={this.renameDoc} />
+      <div className="flex-column">
+        <TabBar docs={this.state.tabsList}
+          docNames={this.state.docs}
+          curDoc={this.state.curDoc}
+          closeTab={this.closeDoc}
+          selectTab={this.changeCurDoc}
+          onDragTabEnd={this.onDragTabEnd}
+          addTab={this.makeNewDoc}
+          renameTab={this.renameDoc} />
+        <div className="flex-row">
+          <div id='editor-area'>
+            <Editor updateView={this.updateView}
+              changeView={this.changeView}
+              name={this.state.curDoc}
+              doc={doc} />
+          </div>
+          <div id='handlebar'></div>
+          <div id='preview-area'>
+            <Preview html={{
+              __html: this.convert(this.state.curSrc)
+            }} />
+          </div>
         </div>
       </div>
-    </main>;
+    </div>;
   }
 }
 
