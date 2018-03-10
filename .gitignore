@@ -59,3 +59,5 @@ typings/
 
 # Stuff
 *.map
+*.pem
+app/hunspell
