@@ -18,23 +18,30 @@ export default class Renameable extends React.Component {
   }
 
   onKeyDown(e) {
-    this.setState({ value: e.target.value });
-
     if (e.keyCode == 13) {
       this.props.onChange(e.target.value);
       this.toggle();
     } else if (e.keyCode == 27) {
+      this.setState({ value: e.target.value });
       this.toggle();
     }
   }
 
   render() {
     if (this.state.active) {
-      return <input type="text"
-        onKeyDown={this.onKeyDown}
+      return <input ref={it => it && (it.focus() || it.select()) }
+        className="Renameable Renameable-input"
+        type="text"
+        onBlur={(e => {
+          this.setState({ value: e.target.value });
+          this.toggle();
+        })}
+        onClick={(e => { e.stopPropagation() })}
+        onKeyDown={(e => { this.onKeyDown(e) })}
         defaultValue={this.state.value} />;
     } else {
-      return <span onDoubleClick={this.toggle}>{this.props.value}</span>;
+      return <span className="Renameable Renameable-label"
+        onDoubleClick={this.toggle}>{this.props.value}</span>;
     }
   }
 }

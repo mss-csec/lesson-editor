@@ -6,7 +6,6 @@ function SidebarItem(props) {
   let classes = ['Sidebar-item'];
 
   if (props.curDoc == props.id) classes.push('Sidebar-item__selected');
-  if (props.isTemp) classes.push('Sidebar-item__temp');
 
   return <dd className={classes.join(' ')} onClick={props.selectItem}>
     <Renameable value={props.name}
@@ -14,6 +13,7 @@ function SidebarItem(props) {
       <CloseBtn onClick={props.deleteItem} />
   </dd>;
 }
+
 export default class Sidebar extends React.Component {
   constructor(props) {
     super(props);
@@ -32,14 +32,15 @@ export default class Sidebar extends React.Component {
         children = [];
 
     for (let doc in docs) {
-      children.push(<SidebarItem key={doc}
-        id={doc}
-        name={docs[doc].name}
-        isTemp={docs[doc].temp}
-        curDoc={this.props.curDoc}
-        deleteItem={this.deleteItem.bind(null, doc)}
-        selectItem={this.props.selectItem.bind(null, doc)}
-        renameItem={this.props.renameItem.bind(null, doc)} />);
+      if (!docs[doc].temp) {
+        children.push(<SidebarItem key={doc}
+          id={doc}
+          name={docs[doc].name}
+          curDoc={this.props.curDoc}
+          deleteItem={this.deleteItem.bind(null, doc)}
+          selectItem={this.props.selectItem.bind(null, doc)}
+          renameItem={this.props.renameItem.bind(null, doc)} />);
+      }
     }
 
     return <dl className="Sidebar">

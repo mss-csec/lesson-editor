@@ -51,7 +51,7 @@ export default class TabBar extends React.Component {
         name={this.props.docNames[id].name}
         isTemp={this.props.docNames[id].temp}
         curDoc={this.props.curDoc}
-        renameDoc={this.props.renameTab.bind(null, id)}
+        renameTab={this.props.renameTab.bind(null, id)}
         selectTab={this.props.selectTab.bind(null, id)}
         closeTab={this.closeTab.bind(null, id)} />
     ));

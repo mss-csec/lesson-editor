@@ -54,9 +54,13 @@ body.dark-theme {
 .TabBar-tab {
   display: flex;
   flex: 1;
+  box-sizing: border-box;
+  max-width: 216px;
   background-color: var(--bg-primary);
   list-style: none;
-  padding: 0 10px 2px;
+  padding: 0;
+  padding-left: 10px;
+  padding-bottom: 2px;
   border-top: 2px solid var(--bg-primary);
   border-right: 1px solid #ccc;
   margin-bottom: 0;
@@ -65,10 +69,18 @@ body.dark-theme {
   user-select: none;
 }
 
-.TabBar-tab span {
+.TabBar-tab .Renameable-label {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.TabBar-tab .Renameable-input {
+  height: 1.5em;
+  min-width: 0;
+  margin: 0;
+  margin-top: 2px;
+  padding: 0;
 }
 
 .TabBar-tab:hover {
@@ -85,11 +97,14 @@ body.dark-theme {
 }
 
 .TabBar .CloseBtn {
+  padding: 0 5px;
   margin-left: auto;
 }
 
 .TabBar-add {
-  flex: 0 0 10px;
+  flex: 0 0 30px;
+  justify-content: center;
+  padding-left: 0;
   border-right: 0;
 }
 

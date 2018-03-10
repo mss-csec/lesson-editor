@@ -2135,26 +2135,41 @@ var Renameable = function (_React$Component) {
   }, {
     key: "onKeyDown",
     value: function onKeyDown(e) {
-      this.setState({ value: e.target.value });
-
       if (e.keyCode == 13) {
         this.props.onChange(e.target.value);
         this.toggle();
       } else if (e.keyCode == 27) {
+        this.setState({ value: e.target.value });
         this.toggle();
       }
     }
   }, {
     key: "render",
     value: function render() {
+      var _this2 = this;
+
       if (this.state.active) {
-        return _react2.default.createElement("input", { type: "text",
-          onKeyDown: this.onKeyDown,
+        return _react2.default.createElement("input", { ref: function ref(it) {
+            return it && (it.focus() || it.select());
+          },
+          className: "Renameable Renameable-input",
+          type: "text",
+          onBlur: function onBlur(e) {
+            _this2.setState({ value: e.target.value });
+            _this2.toggle();
+          },
+          onClick: function onClick(e) {
+            e.stopPropagation();
+          },
+          onKeyDown: function onKeyDown(e) {
+            _this2.onKeyDown(e);
+          },
           defaultValue: this.state.value });
       } else {
         return _react2.default.createElement(
           "span",
-          { onDoubleClick: this.toggle },
+          { className: "Renameable Renameable-label",
+            onDoubleClick: this.toggle },
           this.props.value
         );
       }
@@ -37129,7 +37144,6 @@ function SidebarItem(props) {
   var classes = ['Sidebar-item'];
 
   if (props.curDoc == props.id) classes.push('Sidebar-item__selected');
-  if (props.isTemp) classes.push('Sidebar-item__temp');
 
   return _react2.default.createElement(
     'dd',
@@ -37166,14 +37180,15 @@ var Sidebar = function (_React$Component) {
           children = [];
 
       for (var doc in docs) {
-        children.push(_react2.default.createElement(SidebarItem, { key: doc,
-          id: doc,
-          name: docs[doc].name,
-          isTemp: docs[doc].temp,
-          curDoc: this.props.curDoc,
-          deleteItem: this.deleteItem.bind(null, doc),
-          selectItem: this.props.selectItem.bind(null, doc),
-          renameItem: this.props.renameItem.bind(null, doc) }));
+        if (!docs[doc].temp) {
+          children.push(_react2.default.createElement(SidebarItem, { key: doc,
+            id: doc,
+            name: docs[doc].name,
+            curDoc: this.props.curDoc,
+            deleteItem: this.deleteItem.bind(null, doc),
+            selectItem: this.props.selectItem.bind(null, doc),
+            renameItem: this.props.renameItem.bind(null, doc) }));
+        }
       }
 
       return _react2.default.createElement(
@@ -37295,7 +37310,7 @@ var TabBar = function (_React$Component) {
           name: _this2.props.docNames[id].name,
           isTemp: _this2.props.docNames[id].temp,
           curDoc: _this2.props.curDoc,
-          renameDoc: _this2.props.renameTab.bind(null, id),
+          renameTab: _this2.props.renameTab.bind(null, id),
           selectTab: _this2.props.selectTab.bind(null, id),
           closeTab: _this2.closeTab.bind(null, id) });
       });
