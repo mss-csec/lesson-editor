@@ -14,26 +14,35 @@ body {
 
 .TabBar {
   display: flex;
-  list-style: none;
   border-bottom: 1px solid #ccc;
   margin: 0;
 }
 
 .TabBar-tab {
+  background-color: #fff;
+  list-style: none;
   padding: 0 10px 2px;
   border-top: 2px solid #fff;
   border-right: 1px solid #ccc;
   margin-bottom: 0;
   cursor: default;
+  user-select: none;
 }
 
 .TabBar-tab:hover {
   border-top-color: #ccc;
 }
 
-.TabBar-tab__selected,
+.TabBar-tab__selected {
+  border-top-color: #f52f2f;
+}
+
 .TabBar-tab__selected:hover {
   border-top-color: #f52f2f;
+}
+
+.TabBar .CloseBtn {
+  margin-left: 10px;
 }
 
 .TabBar-add {

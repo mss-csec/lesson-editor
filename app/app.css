@@ -40,17 +40,19 @@ body.dark-theme {
 
 .TabBar {
   display: flex;
-  list-style: none;
   border-bottom: 1px solid #ccc;
   margin: 0;
 }
 
 .TabBar-tab {
+  background-color: var(--bg-primary);
+  list-style: none;
   padding: 0 10px 2px;
-  border-top: 2px solid #fff;
+  border-top: 2px solid var(--bg-primary);
   border-right: 1px solid #ccc;
   margin-bottom: 0;
   cursor: default;
+  user-select: none;
 }
 
 .TabBar-tab:hover {
@@ -59,7 +61,11 @@ body.dark-theme {
 
 .TabBar-tab__selected,
 .TabBar-tab__selected:hover {
-  border-top-color: #f52f2f;
+  border-top-color: var(--brand-colour);
+}
+
+.TabBar .CloseBtn {
+  margin-left: 10px;
 }
 
 .TabBar-add {

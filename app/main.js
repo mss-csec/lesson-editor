@@ -37,9 +37,12 @@ class MainApp extends React.Component {
       };
     }
 
-    state.tabsList = saved.tabsList || Object.keys(state.docs);
+    state.tabsList = saved.tabsList || Object.keys(state.docs).map(id => ({
+      id,
+      name: state.docs[id].name
+    }));
 
-    state.curDoc = saved.curDoc || state.tabsList[state.tabsList.length - 1];
+    state.curDoc = saved.curDoc || state.tabsList[state.tabsList.length - 1].id;
     state.curSrc = state.docs[state.curDoc].doc.getValue();
 
     this.state = state;
@@ -51,6 +54,7 @@ class MainApp extends React.Component {
     // Updating the tabbar
     this.closeDoc = this.closeDoc.bind(this);
     this.changeCurDoc = this.changeCurDoc.bind(this);
+    this.onDragTabEnd = this.onDragTabEnd.bind(this);
 
     // Document updating functions
     this.makeNewDoc = this.makeNewDoc.bind(this);
@@ -109,10 +113,15 @@ class MainApp extends React.Component {
   closeDoc(doc) {
     let tabsList = this.state.tabsList;
 
-    tabsList.splice(tabsList.indexOf(doc), 1);
+    for (let i=0; i<tabsList.length; i++) {
+      if (tabsList[i].id === doc) {
+        tabsList.splice(i, 1);
+        break;
+      }
+    }
 
     this.setState({ tabsList });
-    this.changeCurDoc(tabsList.slice(-1)[0]);
+    this.changeCurDoc(tabsList[tabsList.length - 1].id);
   }
 
   changeCurDoc(doc) {
@@ -120,6 +129,15 @@ class MainApp extends React.Component {
       curDoc: doc,
       curSrc: this.state.docs[doc].doc.getValue()
     });
+  }
+
+  onDragTabEnd({ oldIndex, newIndex }) {
+    let tabsList = this.state.tabsList,
+        item = tabsList.splice(oldIndex, 1)[0];
+
+    tabsList.splice(newIndex, 0, item);
+
+    this.setState({ tabsList });
   }
 
   // Creates a new document
@@ -143,7 +161,7 @@ class MainApp extends React.Component {
       docs[id].doc.setValue('');
     }
 
-    tabsList.push(id);
+    tabsList.push({ id, name });
     this.setState({ docs, tabsList });
     this.changeCurDoc(id);
   }
@@ -168,6 +186,7 @@ class MainApp extends React.Component {
         curDoc={this.state.curDoc}
         closeDoc={this.closeDoc}
         changeCurDoc={this.changeCurDoc}
+        onDragTabEnd={this.onDragTabEnd}
         makeNewDoc={this.makeNewDoc}
         renameDoc={this.renameDoc} />
       <div className="flex-row">
