@@ -29,6 +29,7 @@ export default class Sidebar extends React.Component {
 
   render() {
     let docs = this.props.docs,
+        classes = ["Sidebar"],
         children = [];
 
     for (let doc in docs) {
@@ -43,8 +44,16 @@ export default class Sidebar extends React.Component {
       }
     }
 
-    return <dl className="Sidebar">
-      {children}
-    </dl>
+    if (!children.length) classes.push("Sidebar-empty");
+
+    return <div className={classes.join(' ')}>
+      {children.length ? (
+        <dl className="Sidebar-container">
+          {children}
+        </dl>
+      ) : (
+        <h1 className="Sidebar-empty-heading">No docs to show</h1>
+      )}
+    </div>
   }
 }

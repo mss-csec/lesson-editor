@@ -37,9 +37,74 @@ body {
 
 .Sidebar {
   -webkit-box-flex: 0;
-  -webkit-flex: 0 0 500px;
-      -ms-flex: 0 0 500px;
-          flex: 0 0 500px;
+  -webkit-flex: 0 0 360px;
+      -ms-flex: 0 0 360px;
+          flex: 0 0 360px;
+  height: 100vh;
+  background-color: lighten($bg-secondary, 3%);
+  overflow-y: auto;
+}
+
+.Sidebar-container {
+  padding: 15px 0;
+  margin: 0;
+}
+
+.Sidebar-empty-heading {
+  line-height: 100vh;
+  text-align: center;
+  margin: 0;
+  opacity: .3;
+}
+
+.Sidebar-item {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  padding: 5px 20px;
+  margin: 0;
+  opacity: .7;
+  cursor: default;
+}
+
+.Sidebar-item:hover {
+  opacity: 1;
+}
+
+.Sidebar-item__selected {
+  background-color: #ededed;
+  opacity: 1;
+}
+
+.Sidebar-item .Renameable-label {
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+}
+
+.Sidebar-item .Renameable-label:hover {
+  text-decoration: underline;
+  -webkit-text-decoration-color: #777;
+          text-decoration-color: #777;
+}
+
+.Sidebar-item .Renameable-input {
+  height: 1.5em;
+  min-width: 0;
+  margin: 0;
+  margin-top: 2px;
+  padding: 0;
+}
+
+.Sidebar-item .CloseBtn {
+  visibility: hidden;
+  margin-left: auto;
+}
+
+.Sidebar-item:hover .CloseBtn {
+  visibility: visible;
 }
 
 .TabBar {
@@ -47,6 +112,9 @@ body {
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
+  height: 30px;
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
   border-bottom: 1px solid #ccc;
   margin: 0;
 }
@@ -83,6 +151,12 @@ body {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.TabBar-tab__selected .Renameable-label:hover {
+  text-decoration: underline;
+  -webkit-text-decoration-color: #777;
+          text-decoration-color: #777;
 }
 
 .TabBar-tab .Renameable-input {

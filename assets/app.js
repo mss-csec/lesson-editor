@@ -37177,6 +37177,7 @@ var Sidebar = function (_React$Component) {
     key: 'render',
     value: function render() {
       var docs = this.props.docs,
+          classes = ["Sidebar"],
           children = [];
 
       for (var doc in docs) {
@@ -37191,10 +37192,20 @@ var Sidebar = function (_React$Component) {
         }
       }
 
+      if (!children.length) classes.push("Sidebar-empty");
+
       return _react2.default.createElement(
-        'dl',
-        { className: 'Sidebar' },
-        children
+        'div',
+        { className: classes.join(' ') },
+        children.length ? _react2.default.createElement(
+          'dl',
+          { className: 'Sidebar-container' },
+          children
+        ) : _react2.default.createElement(
+          'h1',
+          { className: 'Sidebar-empty-heading' },
+          'No docs to show'
+        )
       );
     }
   }]);
