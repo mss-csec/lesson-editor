@@ -29,7 +29,7 @@ export default class Sidebar extends React.Component {
 
   render() {
     let docs = this.props.docs,
-        classes = ["Sidebar"],
+        classes = ["Sidebar", `Sidebar__${this.props.open ? "open" : "closed"}`],
         children = [];
 
     for (let doc in docs) {
@@ -49,6 +49,7 @@ export default class Sidebar extends React.Component {
     return <div className={classes.join(' ')}>
       {children.length ? (
         <dl className="Sidebar-container">
+          <h6 className="Sidebar-heading">Documents</h6>
           {children}
         </dl>
       ) : (

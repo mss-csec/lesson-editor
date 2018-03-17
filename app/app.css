@@ -7,9 +7,10 @@
 
   --bg-primary: #fff;
   --bg-secondary: #ededed;
-  --bg-tertiary: lighten($bg-secondary, 3%);
-  --bg-accent: $brand-colour;
+  --bg-tertiary: #f5f5f5;
+  --bg-accent: var(--brand-colour);
 
+  --border-color: #ddd;
   --aria-highlight: #32acfb;
 
   --t: transparent;
@@ -42,15 +43,42 @@ body.dark-theme {
 }
 
 .Sidebar {
-  flex: 0 0 360px;
+  position: relative;
+  flex: 0 0 auto;
   height: 100vh;
-  background-color: var(--bg-tertiary);
+  box-sizing: border-box;
+  background-color: #fcfcfc;
+  border-right: 1px solid var(--border-color);
   overflow-y: auto;
+  transition: .23s width;
+}
+
+.Sidebar-toggle {
+  width: 29px;
+  text-align: center;
+  border: solid var(--border-color);
+  border-width: 0 1px 1px 0;
+}
+
+.Sidebar__open {
+  width: 360px;
+}
+
+.Sidebar__closed {
+  width: 0;
 }
 
 .Sidebar-container {
   padding: 15px 0;
+  padding-top: 0;
   margin: 0;
+}
+
+.Sidebar-heading {
+  font-size: 1em;
+  padding-left: 20px;
+  margin-bottom: 0;
+  opacity: .7;
 }
 
 .Sidebar-empty-heading {
@@ -62,7 +90,7 @@ body.dark-theme {
 
 .Sidebar-item {
   display: flex;
-  padding: 5px 20px;
+  padding: 2px 20px;
   margin: 0;
   opacity: .7;
   cursor: default;
@@ -105,9 +133,10 @@ body.dark-theme {
 
 .TabBar {
   display: flex;
+  flex-grow: 1;
   height: 30px;
   box-sizing: border-box;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid var(--border-color);
   margin: 0;
 }
 
@@ -122,7 +151,7 @@ body.dark-theme {
   padding-left: 10px;
   padding-bottom: 2px;
   border-top: 2px solid var(--bg-primary);
-  border-right: 1px solid #ccc;
+  border-right: 1px solid var(--border-color);
   margin-bottom: 0;
   overflow: hidden;
   cursor: default;
@@ -149,7 +178,7 @@ body.dark-theme {
 }
 
 .TabBar-tab:hover {
-  border-top-color: #ccc;
+  border-top-color: var(--border-color);
 }
 
 .TabBar-tab__selected,
@@ -161,7 +190,7 @@ body.dark-theme {
   font-style: italic;
 }
 
-.TabBar .CloseBtn {
+.TabBar-tab .CloseBtn {
   padding: 0 5px;
   margin-left: auto;
 }

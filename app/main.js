@@ -23,7 +23,8 @@ class MainApp extends React.Component {
       docs: {},
       tabsList: [],
       curDoc: 'Welcome!',
-      curSrc: ''
+      curSrc: '',
+      sidebarOpen: true
     };
 
     const saved = JSON.parse(localStorage.getItem('store') || "{}");
@@ -59,6 +60,8 @@ class MainApp extends React.Component {
     this.makeNewDoc = this.makeNewDoc.bind(this);
     this.renameDoc = this.renameDoc.bind(this);
     this.deleteDoc = this.deleteDoc.bind(this);
+
+    this.toggleSidebar = this.toggleSidebar.bind(this);
 
     // Converters
 
@@ -96,7 +99,8 @@ class MainApp extends React.Component {
           temp: state.docs[d].temp
         })),
         tabsList: state.tabsList,
-        curDoc: state.curDoc
+        curDoc: state.curDoc,
+        sidebarOpen: state.sidebarOpen
       }));
     }, false);
   }
@@ -211,6 +215,14 @@ class MainApp extends React.Component {
     this.setState({ docs });
   }
 
+  // Toggles sidebar
+  toggleSidebar(e) {
+    e.preventDefault();
+
+    let sidebarOpen = !this.state.sidebarOpen;
+    this.setState({ sidebarOpen });
+  }
+
   convert(src) {
     return this.converters.asciidoc(src);
   }
@@ -221,18 +233,28 @@ class MainApp extends React.Component {
     return <div className="flex-row">
       <Sidebar docs={this.state.docs}
         curDoc={this.state.curDoc}
+        open={this.state.sidebarOpen}
         deleteItem={this.deleteDoc}
         selectItem={this.changeCurDoc}
         renameItem={this.renameDoc} />
       <div className="flex-column">
-        <TabBar docs={this.state.tabsList}
-          docNames={this.state.docs}
-          curDoc={this.state.curDoc}
-          closeTab={this.closeDoc}
-          selectTab={this.changeCurDoc}
-          onDragTabEnd={this.onDragTabEnd}
-          addTab={this.makeNewDoc}
-          renameTab={this.renameDoc} />
+        <div className="flex-row">
+          <a href="#"
+            className="Sidebar-toggle"
+            onClick={this.toggleSidebar}
+            dangerouslySetInnerHTML={{
+              __html: this.state.sidebarOpen ? "&laquo;" : "&raquo;"
+            }}>
+          </a>
+          <TabBar docs={this.state.tabsList}
+            docNames={this.state.docs}
+            curDoc={this.state.curDoc}
+            closeTab={this.closeDoc}
+            selectTab={this.changeCurDoc}
+            onDragTabEnd={this.onDragTabEnd}
+            addTab={this.makeNewDoc}
+            renameTab={this.renameDoc} />
+        </div>
         <div className="flex-row">
           <div id='editor-area'>
             <Editor updateView={this.updateView}

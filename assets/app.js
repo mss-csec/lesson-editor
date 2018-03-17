@@ -2768,7 +2768,8 @@ var MainApp = function (_React$Component) {
       docs: {},
       tabsList: [],
       curDoc: 'Welcome!',
-      curSrc: ''
+      curSrc: '',
+      sidebarOpen: true
     };
 
     var saved = JSON.parse(localStorage.getItem('store') || "{}");
@@ -2830,6 +2831,8 @@ var MainApp = function (_React$Component) {
     _this.renameDoc = _this.renameDoc.bind(_this);
     _this.deleteDoc = _this.deleteDoc.bind(_this);
 
+    _this.toggleSidebar = _this.toggleSidebar.bind(_this);
+
     // Converters
 
     var md = new Remarkable('full', {
@@ -2871,7 +2874,8 @@ var MainApp = function (_React$Component) {
           };
         }),
         tabsList: state.tabsList,
-        curDoc: state.curDoc
+        curDoc: state.curDoc,
+        sidebarOpen: state.sidebarOpen
       }));
     }, false);
     return _this;
@@ -3012,6 +3016,17 @@ var MainApp = function (_React$Component) {
 
       this.setState({ docs: docs });
     }
+
+    // Toggles sidebar
+
+  }, {
+    key: 'toggleSidebar',
+    value: function toggleSidebar(e) {
+      e.preventDefault();
+
+      var sidebarOpen = !this.state.sidebarOpen;
+      this.setState({ sidebarOpen: sidebarOpen });
+    }
   }, {
     key: 'convert',
     value: function convert(src) {
@@ -3027,20 +3042,31 @@ var MainApp = function (_React$Component) {
         { className: 'flex-row' },
         _react2.default.createElement(_sidebar2.default, { docs: this.state.docs,
           curDoc: this.state.curDoc,
+          open: this.state.sidebarOpen,
           deleteItem: this.deleteDoc,
           selectItem: this.changeCurDoc,
           renameItem: this.renameDoc }),
         _react2.default.createElement(
           'div',
           { className: 'flex-column' },
-          _react2.default.createElement(_tabbar2.default, { docs: this.state.tabsList,
-            docNames: this.state.docs,
-            curDoc: this.state.curDoc,
-            closeTab: this.closeDoc,
-            selectTab: this.changeCurDoc,
-            onDragTabEnd: this.onDragTabEnd,
-            addTab: this.makeNewDoc,
-            renameTab: this.renameDoc }),
+          _react2.default.createElement(
+            'div',
+            { className: 'flex-row' },
+            _react2.default.createElement('a', { href: '#',
+              className: 'Sidebar-toggle',
+              onClick: this.toggleSidebar,
+              dangerouslySetInnerHTML: {
+                __html: this.state.sidebarOpen ? "&laquo;" : "&raquo;"
+              } }),
+            _react2.default.createElement(_tabbar2.default, { docs: this.state.tabsList,
+              docNames: this.state.docs,
+              curDoc: this.state.curDoc,
+              closeTab: this.closeDoc,
+              selectTab: this.changeCurDoc,
+              onDragTabEnd: this.onDragTabEnd,
+              addTab: this.makeNewDoc,
+              renameTab: this.renameDoc })
+          ),
           _react2.default.createElement(
             'div',
             { className: 'flex-row' },
@@ -37177,7 +37203,7 @@ var Sidebar = function (_React$Component) {
     key: 'render',
     value: function render() {
       var docs = this.props.docs,
-          classes = ["Sidebar"],
+          classes = ["Sidebar", 'Sidebar__' + (this.props.open ? "open" : "closed")],
           children = [];
 
       for (var doc in docs) {
@@ -37200,6 +37226,11 @@ var Sidebar = function (_React$Component) {
         children.length ? _react2.default.createElement(
           'dl',
           { className: 'Sidebar-container' },
+          _react2.default.createElement(
+            'h6',
+            { className: 'Sidebar-heading' },
+            'Documents'
+          ),
           children
         ) : _react2.default.createElement(
           'h1',
