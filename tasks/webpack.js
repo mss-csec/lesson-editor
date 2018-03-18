@@ -30,6 +30,9 @@ const config = {
                 browsers: [ 'last 2 versions', 'Chrome >= 38', 'Firefox >= 52', 'Safari >= 7']
               }
             }]
+          ],
+          plugins: [
+            'transform-object-rest-spread'
           ]
         }
       }

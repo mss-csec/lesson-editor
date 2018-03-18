@@ -15,6 +15,10 @@ const welcomeDoc = {
   temp: true
 };
 
+function getTimestamp() {
+  return (new Date()).getTime();
+}
+
 class MainApp extends React.Component {
   constructor(props) {
     super(props);
@@ -46,6 +50,8 @@ class MainApp extends React.Component {
     state.curSrc = state.docs[state.curDoc].doc.getValue();
 
     this.state = state;
+    this.lastSaveTimestamp = getTimestamp();
+    this.lastSaveTimeout = null;
 
     // Updating and changing the current editor view
     this.updateView = this.updateView.bind(this);
@@ -89,20 +95,26 @@ class MainApp extends React.Component {
     };
 
     window.addEventListener("beforeunload", () => {
-    // Save the document state on page close/reload
-      const state = this.state;
-      localStorage.setItem('store', JSON.stringify({
-        docs: Object.keys(state.docs).map(d => ({
-          id: d,
-          name: state.docs[d].name.split('/'),
-          src: d === state.curDoc ? state.curSrc : state.docs[d].doc.getValue(),
-          temp: state.docs[d].temp
-        })),
-        tabsList: state.tabsList,
-        curDoc: state.curDoc,
-        sidebarOpen: state.sidebarOpen
-      }));
+      this.saveToStorage(this.state);
     }, false);
+  }
+
+  // Save the document state
+  saveToStorage(state) {
+    this.lastSaveTimestamp = getTimestamp();
+
+    localStorage.setItem('store', JSON.stringify({
+      timestamp: getTimestamp(),
+      docs: Object.keys(state.docs).map(d => ({
+        id: d,
+        name: state.docs[d].name.split('/'),
+        src: d === state.curDoc ? state.curSrc : state.docs[d].doc.getValue(),
+        temp: state.docs[d].temp
+      })),
+      tabsList: state.tabsList,
+      curDoc: state.curDoc,
+      sidebarOpen: state.sidebarOpen
+    }));
   }
 
   updateView(text) {
@@ -111,6 +123,18 @@ class MainApp extends React.Component {
       let docs = this.state.docs;
       docs[this.state.curDoc].name = text.split('\n')[0] || 'Untitled';
     }
+
+    // save every 5 seconds
+    if (getTimestamp() > this.lastSaveTimestamp + 5000) {
+      this.saveToStorage({ ...this.state, curSrc: text });
+    }
+
+    // save two seconds after last change
+    clearTimeout(this.lastSaveTimeout);
+    this.lastSaveTimeout = setTimeout(() => {
+      this.saveToStorage(this.state);
+    }, 2000);
+
     this.setState({ curSrc: text });
   }
 
@@ -123,6 +147,9 @@ class MainApp extends React.Component {
       docs[name].doc = doc;
       this.setState({ docs });
     }
+
+    // this.state might not be updated here, but who cares
+    this.saveToStorage(this.state);
   }
 
   closeDoc(doc) {

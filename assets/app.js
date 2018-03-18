@@ -2711,6 +2711,8 @@ module.exports = arrayMap;
 "use strict";
 
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _nanoid = __webpack_require__(64);
@@ -2756,6 +2758,10 @@ var welcomeDoc = {
   temp: true
 };
 
+function getTimestamp() {
+  return new Date().getTime();
+}
+
 var MainApp = function (_React$Component) {
   _inherits(MainApp, _React$Component);
 
@@ -2783,10 +2789,10 @@ var MainApp = function (_React$Component) {
     try {
       for (var _iterator = state.loadedDocs[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
         var _ref = _step.value;
-        var id = _ref.id;
-        var name = _ref.name;
-        var src = _ref.src;
-        var temp = _ref.temp;
+        var id = _ref.id,
+            name = _ref.name,
+            src = _ref.src,
+            temp = _ref.temp;
 
         // asciidoc for now
         state.docs[id || (0, _nanoid2.default)()] = {
@@ -2816,6 +2822,8 @@ var MainApp = function (_React$Component) {
     state.curSrc = state.docs[state.curDoc].doc.getValue();
 
     _this.state = state;
+    _this.lastSaveTimestamp = getTimestamp();
+    _this.lastSaveTimeout = null;
 
     // Updating and changing the current editor view
     _this.updateView = _this.updateView.bind(_this);
@@ -2862,9 +2870,21 @@ var MainApp = function (_React$Component) {
     };
 
     window.addEventListener("beforeunload", function () {
-      // Save the document state on page close/reload
-      var state = _this.state;
+      _this.saveToStorage(_this.state);
+    }, false);
+    return _this;
+  }
+
+  // Save the document state
+
+
+  _createClass(MainApp, [{
+    key: 'saveToStorage',
+    value: function saveToStorage(state) {
+      this.lastSaveTimestamp = getTimestamp();
+
       localStorage.setItem('store', JSON.stringify({
+        timestamp: getTimestamp(),
         docs: Object.keys(state.docs).map(function (d) {
           return {
             id: d,
@@ -2877,17 +2897,28 @@ var MainApp = function (_React$Component) {
         curDoc: state.curDoc,
         sidebarOpen: state.sidebarOpen
       }));
-    }, false);
-    return _this;
-  }
-
-  _createClass(MainApp, [{
+    }
+  }, {
     key: 'updateView',
     value: function updateView(text) {
+      var _this2 = this;
+
       if (this.state.docs[this.state.curDoc].temp && this.state.curDoc !== welcomeDoc.id) {
         var docs = this.state.docs;
         docs[this.state.curDoc].name = text.split('\n')[0] || 'Untitled';
       }
+
+      // save every 5 seconds
+      if (getTimestamp() > this.lastSaveTimestamp + 5000) {
+        this.saveToStorage(_extends({}, this.state, { curSrc: text }));
+      }
+
+      // save two seconds after last change
+      clearTimeout(this.lastSaveTimeout);
+      this.lastSaveTimeout = setTimeout(function () {
+        _this2.saveToStorage(_this2.state);
+      }, 2000);
+
       this.setState({ curSrc: text });
     }
   }, {
@@ -2901,6 +2932,9 @@ var MainApp = function (_React$Component) {
         docs[name].doc = doc;
         this.setState({ docs: docs });
       }
+
+      // this.state might not be updated here, but who cares
+      this.saveToStorage(this.state);
     }
   }, {
     key: 'closeDoc',
