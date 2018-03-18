@@ -24,6 +24,7 @@ class MainApp extends React.Component {
     super(props);
 
     let state = {
+      loadedDocs: [],
       docs: {},
       tabsList: [],
       curDoc: 'Welcome!',
@@ -33,9 +34,9 @@ class MainApp extends React.Component {
 
     const saved = JSON.parse(localStorage.getItem('store') || "{}");
 
-    state.loadedDocs = saved.docs || [ welcomeDoc ];
+    state.loadedDocs = saved.loadedDocs || [ welcomeDoc ];
 
-    for (const { id, name, src, temp } of state.loadedDocs) {
+    for (const { id, name, src, temp } of (saved.docs || state.loadedDocs)) {
       // asciidoc for now
       state.docs[id || nanoid()] = {
         name: name.join('/'),
@@ -99,12 +100,21 @@ class MainApp extends React.Component {
     }, false);
   }
 
+  componentWillReceiveProps() {
+    this.saveToStorage(this.state);
+  }
+
+  componentWillUnmount() {
+    this.saveToStorage(this.state);
+  }
+
   // Save the document state
   saveToStorage(state) {
     this.lastSaveTimestamp = getTimestamp();
 
     localStorage.setItem('store', JSON.stringify({
       timestamp: getTimestamp(),
+      loadedDocs: state.loadedDocs,
       docs: Object.keys(state.docs).map(d => ({
         id: d,
         name: state.docs[d].name.split('/'),

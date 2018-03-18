@@ -2771,6 +2771,7 @@ var MainApp = function (_React$Component) {
     var _this = _possibleConstructorReturn(this, (MainApp.__proto__ || Object.getPrototypeOf(MainApp)).call(this, props));
 
     var state = {
+      loadedDocs: [],
       docs: {},
       tabsList: [],
       curDoc: 'Welcome!',
@@ -2780,14 +2781,14 @@ var MainApp = function (_React$Component) {
 
     var saved = JSON.parse(localStorage.getItem('store') || "{}");
 
-    state.loadedDocs = saved.docs || [welcomeDoc];
+    state.loadedDocs = saved.loadedDocs || [welcomeDoc];
 
     var _iteratorNormalCompletion = true;
     var _didIteratorError = false;
     var _iteratorError = undefined;
 
     try {
-      for (var _iterator = state.loadedDocs[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      for (var _iterator = (saved.docs || state.loadedDocs)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
         var _ref = _step.value;
         var id = _ref.id,
             name = _ref.name,
@@ -2875,16 +2876,27 @@ var MainApp = function (_React$Component) {
     return _this;
   }
 
-  // Save the document state
-
-
   _createClass(MainApp, [{
+    key: 'componentWillReceiveProps',
+    value: function componentWillReceiveProps() {
+      this.saveToStorage(this.state);
+    }
+  }, {
+    key: 'componentWillUnmount',
+    value: function componentWillUnmount() {
+      this.saveToStorage(this.state);
+    }
+
+    // Save the document state
+
+  }, {
     key: 'saveToStorage',
     value: function saveToStorage(state) {
       this.lastSaveTimestamp = getTimestamp();
 
       localStorage.setItem('store', JSON.stringify({
         timestamp: getTimestamp(),
+        loadedDocs: state.loadedDocs,
         docs: Object.keys(state.docs).map(function (d) {
           return {
             id: d,
