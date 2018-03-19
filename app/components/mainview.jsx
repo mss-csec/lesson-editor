@@ -18,7 +18,7 @@ export default class MainView extends React.Component {
       loadedDocs: [],
       docs: {},
       tabsList: [],
-      curDoc: 'Welcome!',
+      curDoc: WELCOME_DOC.id,
       curSrc: '',
       sidebarOpen: true
     };

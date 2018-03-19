@@ -23637,7 +23637,7 @@ var MainView = function (_React$Component) {
       loadedDocs: [],
       docs: {},
       tabsList: [],
-      curDoc: 'Welcome!',
+      curDoc: _consts.WELCOME_DOC.id,
       curSrc: '',
       sidebarOpen: true
     };
