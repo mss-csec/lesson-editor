@@ -10,7 +10,6 @@ body {
 
 .flex-column {
   display: flex;
-  width: 0;
   flex-direction: column;
   flex-grow: 1;
 }
@@ -27,7 +26,7 @@ body {
 }
 
 .Sidebar-toggle {
-  width: 29px;
+  flex: 0 0 29px;
   text-align: center;
   border: solid #ddd;
   border-width: 0 1px 1px 0;
@@ -111,6 +110,7 @@ body {
 .TabBar {
   display: flex;
   flex-grow: 1;
+  width: 0;
   height: 30px;
   box-sizing: border-box;
   border-bottom: 1px solid #ddd;

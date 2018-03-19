@@ -45,7 +45,13 @@ const config = {
       resolvePath('app/')
     ],
 
-    extensions: [ '.js', '.jsx' ]
+    extensions: [ '.js', '.jsx' ],
+
+    alias: {
+      '@components': resolvePath('app/components'),
+      '@controllers': resolvePath('app/controllers'),
+      '@utils': resolvePath('app/utils')
+    }
   },
 
   devtool: 'source-map',

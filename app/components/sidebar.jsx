@@ -1,6 +1,7 @@
 import React from 'react';
-import Renameable from './renameable';
-import CloseBtn from './closebtn';
+
+import Renameable from '@components/renameable';
+import CloseBtn from '@components/closebtn';
 
 function SidebarItem(props) {
   let classes = ['Sidebar-item'];

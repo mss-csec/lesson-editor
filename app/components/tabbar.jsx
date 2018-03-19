@@ -1,8 +1,8 @@
 import React from 'react';
 import { SortableContainer, SortableElement } from 'react-sortable-hoc';
 
-import Renameable from './renameable';
-import CloseBtn from './closebtn';
+import Renameable from '@components/renameable';
+import CloseBtn from '@components/closebtn';
 
 // Base tab element
 const Tab = SortableElement(props => {
