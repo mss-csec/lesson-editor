@@ -31,7 +31,11 @@ export default class Sidebar extends React.Component {
 
   render() {
     let docs = this.props.docs,
-        classes = ["Sidebar", `Sidebar__${this.props.open ? "open" : "closed"}`],
+        classes = [
+          "Sidebar",
+          `Sidebar__${this.props.open ? "open" : "closed"}`,
+          "flex-column"
+        ],
         children = [];
 
     for (let doc in docs) {
@@ -46,19 +50,19 @@ export default class Sidebar extends React.Component {
       }
     }
 
-    if (!children.length) classes.push("Sidebar-empty");
+    if (!children.length) classes.push("Sidebar__empty");
 
     return <div className={classes.join(' ')}>
-      <dl className="Sidebar-container">
-        <RepoSelect auth={this.props.auth}
-          repos={this.props.repos}
-          curRepo={this.props.curRepo}
-          addRepo={this.props.addRepo}
-          changeRepo={this.props.changeRepo} />
+      <RepoSelect auth={this.props.auth}
+        repos={this.props.repos}
+        curRepo={this.props.curRepo}
+        addRepo={this.props.addRepo}
+        changeRepo={this.props.changeRepo} />
+      <dl className="flex-column Sidebar-container">
         {children.length ? (
           children
         ) : (
-          <h1 className="Sidebar-empty-heading">No docs to show</h1>
+          <h1 className="Sidebar__empty-heading">No docs to show</h1>
         )}
       </dl>
     </div>

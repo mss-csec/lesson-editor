@@ -258,7 +258,7 @@ export default class MainView extends React.Component {
   render() {
     const doc = this.state.docs[this.state.curDoc].doc;
 
-    return <div className="flex-row">
+    return <div className="flex-row MainView">
       <Sidebar docs={this.state.docs}
         curDoc={this.state.curDoc}
         open={this.state.sidebarOpen}
@@ -272,7 +272,7 @@ export default class MainView extends React.Component {
         changeRepo={this.props.changeRepo}
          />
       <div className="flex-column">
-        <div className="flex-row">
+        <div className="flex-row TabBar-wrapper">
           <a href="#"
             className="Sidebar-toggle"
             onClick={this.toggleSidebar}
@@ -289,7 +289,7 @@ export default class MainView extends React.Component {
             addTab={this.makeNewDoc}
             renameTab={this.renameDoc} />
         </div>
-        <div className="flex-row">
+        <div className="flex-row EditorPreview-wrapper">
           <div id='editor-area'>
             <Editor updateView={this.updateView}
               changeView={this.changeView}

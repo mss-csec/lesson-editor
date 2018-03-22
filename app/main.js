@@ -28,7 +28,7 @@ class MainApp extends React.Component {
       userName: 'Guest',
       userAvatar: '',
       curRepo: this.store.curRepo || 'localStorage#only your browser',
-      repos: this.store.repos || []
+      repos: this.store.repos || [ 'localStorage#only your browser' ]
     };
 
     this.GitHub = new GitHub(this.store.accessToken);

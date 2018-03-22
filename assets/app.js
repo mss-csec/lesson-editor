@@ -3364,7 +3364,7 @@ var MainApp = function (_React$Component) {
       userName: 'Guest',
       userAvatar: '',
       curRepo: _this.store.curRepo || 'localStorage#only your browser',
-      repos: _this.store.repos || []
+      repos: _this.store.repos || ['localStorage#only your browser']
     };
 
     _this.GitHub = new _github2.default(_this.store.accessToken);
@@ -25912,7 +25912,7 @@ var MainView = function (_React$Component) {
 
       return _react2.default.createElement(
         'div',
-        { className: 'flex-row' },
+        { className: 'flex-row MainView' },
         _react2.default.createElement(_sidebar2.default, { docs: this.state.docs,
           curDoc: this.state.curDoc,
           open: this.state.sidebarOpen,
@@ -25930,7 +25930,7 @@ var MainView = function (_React$Component) {
           { className: 'flex-column' },
           _react2.default.createElement(
             'div',
-            { className: 'flex-row' },
+            { className: 'flex-row TabBar-wrapper' },
             _react2.default.createElement('a', { href: '#',
               className: 'Sidebar-toggle',
               onClick: this.toggleSidebar,
@@ -25948,7 +25948,7 @@ var MainView = function (_React$Component) {
           ),
           _react2.default.createElement(
             'div',
-            { className: 'flex-row' },
+            { className: 'flex-row EditorPreview-wrapper' },
             _react2.default.createElement(
               'div',
               { id: 'editor-area' },
@@ -39246,7 +39246,7 @@ var Sidebar = function (_React$Component) {
     key: 'render',
     value: function render() {
       var docs = this.props.docs,
-          classes = ["Sidebar", 'Sidebar__' + (this.props.open ? "open" : "closed")],
+          classes = ["Sidebar", 'Sidebar__' + (this.props.open ? "open" : "closed"), "flex-column"],
           children = [];
 
       for (var doc in docs) {
@@ -39261,22 +39261,22 @@ var Sidebar = function (_React$Component) {
         }
       }
 
-      if (!children.length) classes.push("Sidebar-empty");
+      if (!children.length) classes.push("Sidebar__empty");
 
       return _react2.default.createElement(
         'div',
         { className: classes.join(' ') },
+        _react2.default.createElement(_reposelect2.default, { auth: this.props.auth,
+          repos: this.props.repos,
+          curRepo: this.props.curRepo,
+          addRepo: this.props.addRepo,
+          changeRepo: this.props.changeRepo }),
         _react2.default.createElement(
           'dl',
-          { className: 'Sidebar-container' },
-          _react2.default.createElement(_reposelect2.default, { auth: this.props.auth,
-            repos: this.props.repos,
-            curRepo: this.props.curRepo,
-            addRepo: this.props.addRepo,
-            changeRepo: this.props.changeRepo }),
+          { className: 'flex-column Sidebar-container' },
           children.length ? children : _react2.default.createElement(
             'h1',
-            { className: 'Sidebar-empty-heading' },
+            { className: 'Sidebar__empty-heading' },
             'No docs to show'
           )
         )
@@ -39382,6 +39382,7 @@ var RepoSelect = function (_React$Component) {
               null,
               repo
             ),
+            _react2.default.createElement('br', null),
             'on ',
             branch
           ),
@@ -39392,17 +39393,24 @@ var RepoSelect = function (_React$Component) {
           _react2.default.createElement(
             _reactModal2.default,
             { isOpen: this.state.showCreateModal,
-              contentLabel: 'Add new repo modal',
+              contentLabel: 'Open repo modal',
               onRequestClose: this.closeCreateModal },
             _react2.default.createElement(
               'h2',
               null,
-              'Create?'
+              'Open repository'
+            ),
+            _react2.default.createElement('input', { ref: 'repo', placeholder: 'owner/repo, e.g. me/me' }),
+            _react2.default.createElement('input', { ref: 'branch', placeholder: 'branch, e.g. master' }),
+            _react2.default.createElement(
+              'button',
+              { onClick: this.addRepo },
+              'Open'
             )
           )
         ) : _react2.default.createElement(
           'h6',
-          null,
+          { className: 'Sidebar-heading' },
           'Documents'
         )
       );

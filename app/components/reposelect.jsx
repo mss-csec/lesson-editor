@@ -37,7 +37,7 @@ export default class RepoSelect extends React.Component {
     return <div className="RepoSelect">
       {this.props.auth ? (<div>
         <div className="RepoSelect-current">
-          <strong>{repo}</strong>
+          <strong>{repo}</strong><br />
           on {branch}
         </div>
         <ReactDropdown options={options}
@@ -46,12 +46,15 @@ export default class RepoSelect extends React.Component {
           value={this.props.curRepo} />
 
         <ReactModal isOpen={this.state.showCreateModal}
-          contentLabel="Add new repo modal"
+          contentLabel="Open repo modal"
           onRequestClose={this.closeCreateModal}>
-          <h2>Create?</h2>
+          <h2>Open repository</h2>
+          <input ref="repo" placeholder="owner/repo, e.g. me/me" />
+          <input ref="branch" placeholder="branch, e.g. master" />
+          <button onClick={this.addRepo}>Open</button>
         </ReactModal>
       </div>) : (
-        <h6>Documents</h6>
+        <h6 className="Sidebar-heading">Documents</h6>
       )}
     </div>;
   }
