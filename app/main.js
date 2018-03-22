@@ -26,13 +26,17 @@ class MainApp extends React.Component {
       authenticated: false,
       usePersistentStorage: !!localStorage.getItem(STORAGE_KEY),
       userName: 'Guest',
-      userAvatar: ''
+      userAvatar: '',
+      curRepo: this.store.curRepo || 'localStorage#only your browser',
+      repos: this.store.repos || []
     };
 
     this.GitHub = new GitHub(this.store.accessToken);
 
     this.authenticate = this.authenticate.bind(this);
     this.logout = this.logout.bind(this);
+    this.addRepo = this.addRepo.bind(this);
+    this.changeRepo = this.changeRepo.bind(this);
 
     this.GitHub.user()
       .then(({ login, avatar_url }) => {
@@ -54,11 +58,15 @@ class MainApp extends React.Component {
     if (!usePersistentStorage) {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
         timestamp: getTimestamp(),
+        curRepo: this.state.curRepo,
+        repos: this.state.repos,
         ...store
       }));
     } else {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         timestamp: getTimestamp(),
+        curRepo: this.state.curRepo,
+        repos: this.state.repos,
         ...store
       }));
     }
@@ -107,8 +115,18 @@ class MainApp extends React.Component {
     this.setState({ authenticated: false });
   }
 
+  addRepo(value) {
+    const repos = [ ...this.state.repos, value ];
+    this.setState({ repos })
+    this.changeRepo(value);
+  }
+
+  changeRepo(value) {
+    this.setState({ curRepo: value });
+  }
+
   render() {
-    const { authenticated, userName, userAvatar } = this.state;
+    const { authenticated, userName, userAvatar, repos, curRepo } = this.state;
 
     return <div className="flex-column">
       <TopBar auth={authenticated}
@@ -116,7 +134,11 @@ class MainApp extends React.Component {
         logoutFn={this.logout}
         userName={userName}
         userAvatar={userAvatar} />
-      <MainView store="store" />
+      <MainView repos={repos}
+        curRepo={curRepo}
+        auth={authenticated}
+        addRepo={this.addRepo}
+        changeRepo={this.changeRepo} />
     </div>;
   }
 }

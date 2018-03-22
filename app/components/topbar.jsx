@@ -104,7 +104,7 @@ export default class TopBar extends React.Component {
               <span className="User-name">Hello, {this.props.userName}!</span>
               <img src={this.props.userAvatar} alt="User avatar" className="User-avatar" />
             </div>
-            <span class="Dropdown-arrow"></span>
+            <span className="Dropdown-arrow"></span>
           </div>
           {this.state.showUserDropdown && <div className="Dropdown-menu">
             {this.Dropdown.buildMenu()}

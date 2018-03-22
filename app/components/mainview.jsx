@@ -23,7 +23,7 @@ export default class MainView extends React.Component {
       sidebarOpen: true
     };
 
-    const saved = JSON.parse(localStorage.getItem(props.store) || "{}");
+    const saved = JSON.parse(localStorage.getItem(props.curRepo) || "{}");
 
     state.loadedDocs = saved.loadedDocs || [ WELCOME_DOC ];
 
@@ -103,7 +103,7 @@ export default class MainView extends React.Component {
   saveToStorage(state) {
     this.lastSaveTimestamp = getTimestamp();
 
-    localStorage.setItem(this.props.store, JSON.stringify({
+    localStorage.setItem(this.props.curRepo, JSON.stringify({
       timestamp: getTimestamp(),
       loadedDocs: state.loadedDocs,
       docs: Object.keys(state.docs).map(d => ({
@@ -264,7 +264,13 @@ export default class MainView extends React.Component {
         open={this.state.sidebarOpen}
         deleteItem={this.deleteDoc}
         selectItem={this.changeCurDoc}
-        renameItem={this.renameDoc} />
+        renameItem={this.renameDoc}
+        auth={this.props.auth}
+        repos={this.props.repos}
+        curRepo={this.props.curRepo}
+        addRepo={this.props.addRepo}
+        changeRepo={this.props.changeRepo}
+         />
       <div className="flex-column">
         <div className="flex-row">
           <a href="#"

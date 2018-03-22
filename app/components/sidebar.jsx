@@ -49,18 +49,18 @@ export default class Sidebar extends React.Component {
     if (!children.length) classes.push("Sidebar-empty");
 
     return <div className={classes.join(' ')}>
-      {children.length ? (
-        <dl className="Sidebar-container">
-          <RepoSelect
-            auth={false}
-            repo="what/what"
-            branch="master"
-            repos={[]} />
-          {children}
-        </dl>
-      ) : (
-        <h1 className="Sidebar-empty-heading">No docs to show</h1>
-      )}
+      <dl className="Sidebar-container">
+        <RepoSelect auth={this.props.auth}
+          repos={this.props.repos}
+          curRepo={this.props.curRepo}
+          addRepo={this.props.addRepo}
+          changeRepo={this.props.changeRepo} />
+        {children.length ? (
+          children
+        ) : (
+          <h1 className="Sidebar-empty-heading">No docs to show</h1>
+        )}
+      </dl>
     </div>
   }
 }
