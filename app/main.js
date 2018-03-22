@@ -3,25 +3,119 @@ import nanoid from 'nanoid';
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import { STORAGE_KEY } from '@utils/consts';
+import ReactModal from 'react-modal';
+
+import { beforeUnload, getTimestamp, noop } from '@utils/utils';
+import { CLIENT_ID, STORAGE_KEY } from '@utils/consts';
+import GitHub from '@utils/github';
 
 import MainView from '@components/mainview';
+import TopBar from '@components/topbar';
+
+ReactModal.setAppElement('[react-app]');
 
 class MainApp extends React.Component {
   constructor(props) {
     super(props);
 
-    const store = JSON.parse(
-      (sessionStorage || localStorage).getItem(STORAGE_KEY) || '{}'
+    this.store = JSON.parse(
+      sessionStorage.getItem(STORAGE_KEY) || localStorage.getItem(STORAGE_KEY) || '{}'
     );
 
     this.state = {
-      accessToken: store.accessToken
+      authenticated: false,
+      usePersistentStorage: !!localStorage.getItem(STORAGE_KEY),
+      userName: 'Guest',
+      userAvatar: ''
     };
+
+    this.GitHub = new GitHub(this.store.accessToken);
+
+    this.authenticate = this.authenticate.bind(this);
+    this.logout = this.logout.bind(this);
+
+    this.GitHub.user()
+      .then(({ login, avatar_url }) => {
+        this.setState({
+          authenticated: true,
+          userName: login,
+          userAvatar: avatar_url
+        });
+      }, noop);
+
+    beforeUnload.add(() => {
+      this.saveToStorage();
+    });
+  }
+
+  // Save the store
+  saveToStorage(store = this.store,
+      usePersistentStorage = this.state.usePersistentStorage) {
+    if (!usePersistentStorage) {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+        timestamp: getTimestamp(),
+        ...store
+      }));
+    } else {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        timestamp: getTimestamp(),
+        ...store
+      }));
+    }
+  }
+
+  authenticate(usePersistentStorage = false) {
+    if (this.state.authenticated) {
+      return this.GitHub.rateLimit()
+        .then(noop, (e) => {
+          this.setState({ authenticated: false });
+        });
+    }
+
+    const helper = (token) => {
+        this.GitHub.setToken(token);
+
+        this.store.accessToken = token;
+        this.saveToStorage(this.store, usePersistentStorage);
+
+        this.setState({
+          authenticated: true,
+          usePersistentStorage
+        });
+
+        this.GitHub.user()
+          .then(({ login, avatar_url }) => {
+            this.setState({
+              authenticated: true,
+              userName: login,
+              userAvatar: avatar_url
+            });
+          }, noop);
+      };
+
+    if (this.store.accessToken) {
+      return helper(this.store.accessToken);
+    } else {
+      return GitHub.authenticate("https://colossal-eye.glitch.me/oauth", CLIENT_ID, nanoid())
+        .then(helper);
+    }
+  }
+
+  logout() {
+    this.store.accessToken = undefined;
+    this.saveToStorage();
+    this.setState({ authenticated: false });
   }
 
   render() {
+    const { authenticated, userName, userAvatar } = this.state;
+
     return <div className="flex-column">
+      <TopBar auth={authenticated}
+        authFn={this.authenticate}
+        logoutFn={this.logout}
+        userName={userName}
+        userAvatar={userAvatar} />
       <MainView store="store" />
     </div>;
   }

@@ -27,6 +27,7 @@ body {
 
 .Sidebar-toggle {
   flex: 0 0 29px;
+  line-height: 36px;
   text-align: center;
   border: solid #ddd;
   border-width: 0 1px 1px 0;
@@ -111,7 +112,7 @@ body {
   display: flex;
   flex-grow: 1;
   width: 0;
-  height: 30px;
+  height: 40px;
   box-sizing: border-box;
   border-bottom: 1px solid #ddd;
   margin: 0;
@@ -120,8 +121,10 @@ body {
 .TabBar-tab {
   display: flex;
   flex: 1;
+  align-items: center;
   box-sizing: border-box;
   max-width: 216px;
+  height: 100%;
   background-color: #fff;
   list-style: none;
   padding: 0;
@@ -184,6 +187,23 @@ body {
   justify-content: center;
   padding-left: 0;
   border-right: 0;
+}
+
+.TopBar {
+  height: 30px;
+  background-color: #232323;
+  color: #fff;
+  padding: 5px;
+}
+
+.User {
+  margin-left: auto;
+}
+
+.User-avatar {
+  height: 30px;
+  margin-left: 10px;
+  border-radius: 100%;
 }
 
 #editor-area,

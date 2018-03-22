@@ -1,7 +1,7 @@
 export const GITHUB_BASE_URL = 'https://api.github.com';
 
 // noop for now
-function log() {}
+function log(...args) { return args }
 
 export default class GitHub {
   constructor(token) {
@@ -9,9 +9,13 @@ export default class GitHub {
     this.cache = {};
   }
 
+  setToken(token) {
+    this.token = token;
+  }
+
   doAction(endpoint, method = 'GET', options = {}) {
     return new Promise((res, rej) => {
-      const url = `${API_BASE_URL}/${endpoint}`,
+      const url = `${GITHUB_BASE_URL}/${endpoint}`,
             cacheUrl = `${url}#${encodeURIComponent(JSON.stringify(options.params))}`;
 
       let headers = new Headers();
@@ -85,6 +89,10 @@ export default class GitHub {
 
       // The state and code is posted back from the popup via postMessage
       const messageHandler = (event) => {
+        // React DevTools uses PostMessage to communicate, which interferes
+        // with this
+        if (typeof event.data !== 'string') return;
+
         if (event.origin !== location.origin) {
           return rej('Auth error: authentication message from incorrect origin');
         }
@@ -95,6 +103,7 @@ export default class GitHub {
         let params = new URLSearchParams(event.data);
 
         if (params.get('state') !== state) {
+          console.log(event.data, state);
           return rej('OAuth error: bad state received');
         }
 
@@ -127,14 +136,14 @@ export default class GitHub {
   }
 
   rateLimit() {
-    return doAction('rate_limit');
+    return this.doAction('rate_limit');
   }
 
   user(method = 'GET', options = {}) {
-    return doAction('user', method, options);
+    return this.doAction('user', method, options);
   }
 
   repo(repo, endpoint, method = 'GET', options = {}) {
-    return doAction(`repos/${repo}/${endpoint}`, method, options);
+    return this.doAction(`repos/${repo}/${endpoint}`, method, options);
   }
 }

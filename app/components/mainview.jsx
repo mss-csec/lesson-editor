@@ -2,7 +2,7 @@ import nanoid from 'nanoid';
 
 import React from 'react';
 
-import { getTimestamp } from '@utils/utils';
+import { beforeUnload, getTimestamp } from '@utils/utils';
 import { WELCOME_DOC } from '@utils/consts';
 
 import Editor from '@components/editor';
@@ -86,9 +86,9 @@ export default class MainView extends React.Component {
       }
     };
 
-    window.addEventListener("beforeunload", () => {
+    beforeUnload.add(() => {
       this.saveToStorage(this.state);
-    }, false);
+    });
   }
 
   componentWillReceiveProps() {
