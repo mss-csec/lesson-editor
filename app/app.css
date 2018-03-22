@@ -41,6 +41,24 @@ body.dark-theme {
   flex-grow: 1;
 }
 
+.Dropdown-control {
+  display: flex;
+  align-items: center;
+}
+
+.Dropdown-placeholder {
+  margin-right: 10px;
+}
+
+.Dropdown-arrow {
+  width: 0;
+  height: 0;
+  border: 3px solid transparent;
+  border-top-color: currentColor;
+  margin-left: auto;
+  transform: translateY(1.5px);
+}
+
 .Sidebar {
   position: relative;
   flex: 0 0 auto;
@@ -210,6 +228,11 @@ body.dark-theme {
   background-color: var(--fg-primary);
   color: var(--bg-primary);
   padding: 5px;
+  z-index: 10;
+}
+
+.TopBar .Dropdown-menu {
+  background-color: var(--fg-primary);
 }
 
 .User {

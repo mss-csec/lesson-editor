@@ -97,16 +97,10 @@ export default class TopBar extends React.Component {
   render() {
     const appUrl = `https://github.com/settings/connections/applications/${CLIENT_ID}`
     return <div className="flex-row TopBar">
-      {this.props.auth ? (
-        <ReactDropdown options={[]} className="RepoSelect" />
-      ) : (
-        <a onClick={this.openAuthModal}>Log in to choose repository</a>
-      )}
-
       <div className="User" ref="user">
         {this.props.auth ? (<div className="Dropdown-root">
-          <div className="Dropdown-control">
-            <div className="Dropdown-placeholder" onClick={this.toggleUserDropdown}>
+          <div className="Dropdown-control" onClick={this.toggleUserDropdown}>
+            <div className="Dropdown-placeholder">
               <span className="User-name">Hello, {this.props.userName}!</span>
               <img src={this.props.userAvatar} alt="User avatar" className="User-avatar" />
             </div>

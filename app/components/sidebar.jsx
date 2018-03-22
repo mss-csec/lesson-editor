@@ -2,6 +2,7 @@ import React from 'react';
 
 import Renameable from '@components/renameable';
 import CloseBtn from '@components/closebtn';
+import RepoSelect from '@components/reposelect';
 
 function SidebarItem(props) {
   let classes = ['Sidebar-item'];
@@ -50,7 +51,11 @@ export default class Sidebar extends React.Component {
     return <div className={classes.join(' ')}>
       {children.length ? (
         <dl className="Sidebar-container">
-          <h6 className="Sidebar-heading">Documents</h6>
+          <RepoSelect
+            auth={false}
+            repo="what/what"
+            branch="master"
+            repos={[]} />
           {children}
         </dl>
       ) : (

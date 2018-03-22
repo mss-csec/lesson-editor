@@ -14,6 +14,25 @@ body {
   flex-grow: 1;
 }
 
+.Dropdown-control {
+  display: flex;
+  align-items: center;
+}
+
+.Dropdown-placeholder {
+  margin-right: 10px;
+}
+
+.Dropdown-arrow {
+  width: 0;
+  height: 0;
+  border: 3px solid transparent;
+  border-top-color: currentColor;
+  margin-left: auto;
+  -webkit-transform: translateY(1.5px);
+          transform: translateY(1.5px);
+}
+
 .Sidebar {
   position: relative;
   flex: 0 0 auto;
@@ -194,6 +213,11 @@ body {
   background-color: #232323;
   color: #fff;
   padding: 5px;
+  z-index: 10;
+}
+
+.TopBar .Dropdown-menu {
+  background-color: #232323;
 }
 
 .User {
